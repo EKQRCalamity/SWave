@@ -189,7 +189,7 @@ namespace SyncWave.Misc
             SpellClass? smite = GetSmite();
             foreach (JungleMob mob in jungleMobs)
             {
-                if (smite != null)
+                if (smite != null && Env.ModuleVersion == V.Development)
                     Logger.Log($"Smite: CD: {smite.Cooldown} Charges: {smite.Charges} Ready: {smite.IsSpellReady}");
                 if (mob.Health > smiteDmg || mob.Health < 0 || !mob.IsAlive || mob.Distance > 500 || smite == null || smite.Charges < 1)
                     continue;
@@ -255,10 +255,10 @@ namespace SyncWave.Misc
         internal SpellClass? GetSmite()
         {
             SpellClass sum1 = Env.Me().GetSpellBook().GetSpellClass(Oasys.Common.Enums.GameEnums.SpellSlot.Summoner1);
-            if (Testing)
+            if (Env.ModuleVersion == V.Development)
                 Logger.Log(sum1.SpellData.SpellName);
             SpellClass sum2 = Env.Me().GetSpellBook().GetSpellClass(Oasys.Common.Enums.GameEnums.SpellSlot.Summoner2);
-            if (Testing)
+            if (Env.ModuleVersion == V.Development)
                 Logger.Log(sum2.SpellData.SpellName);
             SpellClass? Smite = (sum1.SpellData.SpellName.Contains("SummonerSmite")) ? sum1 : sum2.SpellData.SpellName.Contains("SummonerSmite") ? sum2 : null;
             return Smite;
@@ -269,7 +269,7 @@ namespace SyncWave.Misc
             SpellClass? Smite = GetSmite();
             if (Smite == null)
                 return 0F;
-            if (Testing)
+            if (Env.ModuleVersion == V.Development)
                 Logger.Log(Smite.SpellData.SpellName);
             if (Smite.SpellData.SpellName.Contains("SummonerSmite") && Smite.IsSpellReady)
             {

@@ -260,11 +260,21 @@ namespace SyncWave.Misc
                    !buff.Name.Equals("yonerstun", System.StringComparison.OrdinalIgnoreCase) &&
                    !buff.Name.Equals("landslidedebuff", System.StringComparison.OrdinalIgnoreCase) &&
                    !buff.Name.Equals("CassiopeiaWSlow", System.StringComparison.OrdinalIgnoreCase) &&
-                   !buff.Name.Equals("megaadhesiveslow", System.StringComparison.OrdinalIgnoreCase);
+                   !buff.Name.Equals("megaadhesiveslow", System.StringComparison.OrdinalIgnoreCase) &&
+                   !buff.Name.Equals("UnknownBuff", System.StringComparison.OrdinalIgnoreCase);
         }
 
         internal static bool IsCrowdControlledButCanCleanse<T>(T obj) where T : GameObjectBase
         {
+            if (Env.ModuleVersion == Common.Enums.V.Development)
+            {
+                BuffEntry? buff = obj.BuffManager.GetBuffList().FirstOrDefault(x => IsCrowdControllButCanCleanse(x, false));
+                if (buff != null)
+                {
+                    Logger.Log($"{obj.ModelName} - {buff.EntryType} - {buff.Name}");
+                }
+            }
+
             return obj.BuffManager.GetBuffList().Any(x => IsCrowdControllButCanCleanse(x, false));
         }
 

@@ -47,7 +47,7 @@ namespace SyncWave.Champions
         internal override float CalculateDamage(GameObjectBase target)
         {
             float dmg = 0;
-            if (Env.QLevel >= 1)
+            if (Env.QLevel >= 1 && Env.QReady)
             {
                 dmg = Kalista.QDamage[Env.QLevel] + (Kalista.QScaling * Env.Me().UnitStats.TotalAttackDamage);
             }
@@ -364,8 +364,16 @@ namespace SyncWave.Champions
                     Logger.Log($"Found bound ally: {BoundAlly.ModelName}");
             }
             #endregion
-            if (Env.ModuleVersion == Common.Enums.V.Development)
+            if (Env.ModuleVersion == Common.Enums.V.None)
                 Logger.Log("Updating Damages");
+            if (!DrawE.IsOn)
+            {
+                _EDamage.IsOn = false;
+            }
+            if (!DrawQ.IsOn)
+            {
+                _QDamage.IsOn = false;
+            }
             _QDamage.UpdateName((DrawQMode.SelectedModeName == "AboveHPBar") ? "Q" : String.Empty);
             _QDamage.UpdateColor(ColorConverter.GetColor(DrawQColor.SelectedModeName));
             _QDamage.UpdatePriority((uint)DrawQPrio.Value);
@@ -430,14 +438,10 @@ namespace SyncWave.Champions
         {
             if (!Enabled.IsOn)
                 return;
-            if (!DrawE.IsOn)
-            {
-                _EDamage.IsOn = false;
-            }
-            if (!DrawQ.IsOn)
-                _QDamage.IsOn = false;
             if (DrawE.IsOn || DrawQ.IsOn)
             {
+                if (Env.ModuleVersion == Common.Enums.V.Preview)
+                    Logger.Log("In general Drawing");
                 ObjectTypeFlag[] flags = new ObjectTypeFlag[] { ObjectTypeFlag.AIHeroClient, ObjectTypeFlag.AIMinionClient, ObjectTypeFlag.NeutralCampClient };
                 List<GameObjectBase> targets = getEnemiesWithStacks(flags).deepCopy();
                 foreach (GameObjectBase target in targets)
@@ -446,6 +450,8 @@ namespace SyncWave.Champions
                     {
                         if (!(DrawEMode.SelectedModeName == "OnHPBar"))
                         {
+                            if (Env.ModuleVersion == Common.Enums.V.Preview)
+                                Logger.Log("Should Draw E");
                             if (!Render.HasDamage(_EDamage))
                                 Render.AddDamage(_EDamage);
                             if (!_EDamage.IsOn)
@@ -464,8 +470,11 @@ namespace SyncWave.Champions
                     }
                     if (DrawQ.IsOn && Env.QLevel >= 1)
                     {
+                        
                         if (!(DrawQMode.SelectedModeName == "OnHPBar"))
                         {
+                            if (Env.ModuleVersion == Common.Enums.V.Preview)
+                                Logger.Log("Should Draw Q");
                             if (!Render.HasDamage(_QDamage))
                                 Render.AddDamage(_QDamage);
                             if (!_QDamage.IsOn)
