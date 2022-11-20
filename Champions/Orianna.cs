@@ -234,7 +234,7 @@ namespace SyncWave.Champions
                 {
                     Vector3 pos = Env.Me().Position;
                     pos.Y += 30;
-                    RenderFactory.DrawText($"Combo: {currentCombo.Name}", 14, pos.ToW2S(), Color.Black, true);
+                    RenderFactory.DrawText($"Combo: {currentCombo.Name}", pos.ToW2S(), Color.Black, true);
                 }
             }
             if (isOn(DrawGroupIndex, DrawComboDamage)) {
