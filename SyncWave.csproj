@@ -1,0 +1,48 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net6.0-windows7</TargetFramework>
+	<UseWindowsForms>true</UseWindowsForms>
+    <Nullable>enable</Nullable>
+    <Version>1.4.12.3</Version>
+    <Title>SyncWave</Title>
+    <Authors>EKQR Kotlin</Authors>
+	<CopyTargetDir>C:\Program Files\I7f53a5fd799a0be39615833538288f41lf\Modules\</CopyTargetDir>
+  </PropertyGroup>
+	
+	<Target Name="PostBuild" AfterTargets="PostBuildEvent">
+		<Exec Command="cd /d &quot;$(CopyTargetDir)&quot; %26%26 rename &quot;$(ProjectName).omod&quot; &quot;$(ProjectName)_$([System.DateTime]::Now.ToString(dd.MM.yyyy_HH-mm-ss))_backup.omod&quot;" />
+		<Exec Command="copy /Y &quot;$(TargetDir)$(ProjectName).dll&quot; &quot;$(CopyTargetDir)$(ProjectName).omod&quot;" />
+	</Target>
+		
+	<ItemGroup>
+    <Reference Include="Newtonsoft.Json">
+      <HintPath>..\..\..\Modules\Oasys\Include\Newtonsoft.Json.dll</HintPath>
+    </Reference>
+    <Reference Include="Oasys.Common">
+      <HintPath>..\..\..\Modules\Oasys\Include\Oasys.Common.dll</HintPath>
+    </Reference>
+    <Reference Include="Oasys.SDK">
+      <HintPath>..\..\..\Modules\Oasys\Include\Oasys.SDK.dll</HintPath>
+    </Reference>
+    <Reference Include="SharpDX">
+      <HintPath>..\..\..\Modules\Oasys\Include\SharpDX.dll</HintPath>
+    </Reference>
+    <Reference Include="SharpDX.Desktop">
+      <HintPath>..\..\..\Modules\Oasys\Include\SharpDX.Desktop.dll</HintPath>
+    </Reference>
+    <Reference Include="SharpDX.Direct3D9">
+      <HintPath>..\..\..\Modules\Oasys\Include\SharpDX.Direct3D9.dll</HintPath>
+    </Reference>
+    <Reference Include="SharpDX.DirectInput">
+      <HintPath>..\..\..\Modules\Oasys\Include\SharpDX.DirectInput.dll</HintPath>
+    </Reference>
+    <Reference Include="SharpDX.DXGI">
+      <HintPath>..\..\..\Modules\Oasys\Include\SharpDX.DXGI.dll</HintPath>
+    </Reference>
+    <Reference Include="SharpDX.Mathematics">
+      <HintPath>..\..\..\Modules\Oasys\Include\SharpDX.Mathematics.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+
+</Project>
