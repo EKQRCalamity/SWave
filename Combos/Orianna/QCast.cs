@@ -54,7 +54,6 @@ namespace SyncWave.Combos.Orianna
             if (target.DistanceToPlayer() >= MinRange)
                 return false;
             float actualDamage = DamageCalculator.CalculateActualDamage(Env.Me(), target, 0, GetFullDamageRaw(), 0);
-            //Logger.Log($"Q can kill: {target.ModelName} | {(target.Health - actualDamage) <= 0}");
             return (target.Health - actualDamage) <= 0;
         }
 

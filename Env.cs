@@ -23,6 +23,6 @@ namespace SyncWave
 
 
         internal static List<string> SupportedChamps = new List<string>() { "Orianna", "Twitch", "KogMaw", "TahmKench", "Kalista", "Irelia" };
-        internal static V ModuleVersion => V.Stable;
+        internal static V ModuleVersion => V.InTesting;
     }
 }

@@ -164,27 +164,62 @@ namespace SyncWave.Common.Helper
         {
             if (damageList.Count == 0) return;
             damageList = damageList.OrderByDescending(x => x.Priority).ToList();
+
+            List<Damage> actualDmgList = new();
+
+            float tempHealth = target.Health;
+
+            for (int i = 0; i < damageList.Count; i++)
+            {
+                float prioDamage = damageList[i].GetDamage(target);
+                tempHealth -= prioDamage;
+                if ((tempHealth) >= -(prioDamage))
+                {
+                    actualDmgList.Add(damageList[i]);
+                    if (Env.ModuleVersion == Enums.V.InTesting)
+                    {
+                        Logger.Log($"Added: {damageList[i].Name}.");
+                    }
+                } else
+                {
+                    if (Env.ModuleVersion == Enums.V.InTesting)
+                    {
+
+                        Logger.Log($"Skipped: {damageList[i].Name}.");
+                    }
+                    break;
+                }
+            }
+
+            actualDmgList = actualDmgList.OrderByDescending(x => x.Priority).ToList();
+
             List<float> damages = new();
             List<Color> colors = new();
             List<string> names = new();
-            for (int i = 0; i < damageList.Count; i++)
+            for (int i = 0; i < actualDmgList.Count; i++)
             {
-                Damage damage = damageList[i];
+                Damage damage = actualDmgList[i];
                 damages.Add(damage.GetDamage(target));
                 colors.Add(damage.Color);
                 names.Add(damage.Name);
             }
+
+
             if (damages.Count != colors.Count || damages.Count != names.Count)
                 return;
-            float fullDamge = 0;
-            foreach (float damage in damages)
-                fullDamge += damage;
 
-            for(int i = 0; i <= damages.Count - 1; i++)
+            float fullDamage = 0;
+
+            foreach (Damage damage in actualDmgList)
+            {
+                fullDamage += damage.GetDamage(target);
+            }
+
+            for (int i = 0; i <= damages.Count - 1; i++)
             {
                 int index = damages.Count - (i + 1);
-                DrawDamageAboveHP(target, fullDamge, colors[index], 1, false, names[index]);
-                fullDamge -= damages[index];
+                DrawDamageAboveHP(target, fullDamage, colors[index], 1, false, names[index]);
+                fullDamage -= damages[index];
             }
         }
 
@@ -378,7 +413,7 @@ namespace SyncWave.Common.Helper
 
             RenderFactory.DrawLine(start.X, start.Y, end.X, end.Y, thickness, color);
             if (name != "" || name != String.Empty)
-                RenderFactory.DrawText(name, 12, new Vector2(start.X, start.Y - 22), Color.Black, false);
+                RenderFactory.DrawText(name, new Vector2(start.X + 3, start.Y - 22), Color.Black, false);
         }
 
         internal static void DrawExecuteBar(GameObjectBase target, float damage, Color color, bool line = false, int yOffset = 0, int xOffset = 0)

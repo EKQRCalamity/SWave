@@ -61,18 +61,6 @@ namespace SyncWave.Combos.Tahmkench
         }
         internal override bool Run()
         {
-            /*if (Champions.Tahmkench.currentTarget != null)
-            {
-                List<BuffEntry> buffs = Champions.Tahmkench.currentTarget.BuffManager.Buffs.deepCopy();
-                Logger.Log($"Number of Buffs: {buffs.Count}");
-                foreach (BuffEntry buff in buffs)
-                {
-                    if (buff.Name != "UnknownBuff")
-                        Logger.Log($"Buff name: {buff.Name} Buff Stacks: {buff.Stacks} Buff Count|Alt Count: {buff.BuffCountInt}|{buff.BuffCountAlt} Buff active: {buff.IsActive}");
-                }
-                Logger.Log($"---Buff List End---");
-            }*/
-            
             return false;
         }
 

@@ -305,7 +305,8 @@ namespace SyncWave.Champions
             }
             catch (Exception ex)
             {
-                Logger.Log(ex.Message);
+                if (Env.ModuleVersion == Common.Enums.V.Development)
+                    Logger.Log(ex.Message);
             }
         }
 
@@ -440,7 +441,7 @@ namespace SyncWave.Champions
                 return;
             if (DrawE.IsOn || DrawQ.IsOn)
             {
-                if (Env.ModuleVersion == Common.Enums.V.Preview)
+                if (Env.ModuleVersion == Common.Enums.V.None)
                     Logger.Log("In general Drawing");
                 ObjectTypeFlag[] flags = new ObjectTypeFlag[] { ObjectTypeFlag.AIHeroClient, ObjectTypeFlag.AIMinionClient, ObjectTypeFlag.NeutralCampClient };
                 List<GameObjectBase> targets = getEnemiesWithStacks(flags).deepCopy();
@@ -456,7 +457,7 @@ namespace SyncWave.Champions
                                 Render.AddDamage(_EDamage);
                             if (!_EDamage.IsOn)
                                 _EDamage.IsOn = true;
-                            
+
                             if (target.IsObject(ObjectTypeFlag.AIMinionClient))
                                 RenderFactory.DrawHPBarDamage(target, ECalc.CalculateDamage(target));
                         }
@@ -468,9 +469,14 @@ namespace SyncWave.Champions
                         }
 
                     }
+                }
+                flags = new ObjectTypeFlag[] { ObjectTypeFlag.AIHeroClient };
+                targets = UnitManager.GetEnemies(flags);
+                foreach (GameObjectBase target in targets)
+                {
                     if (DrawQ.IsOn && Env.QLevel >= 1)
                     {
-                        
+
                         if (!(DrawQMode.SelectedModeName == "OnHPBar"))
                         {
                             if (Env.ModuleVersion == Common.Enums.V.Preview)

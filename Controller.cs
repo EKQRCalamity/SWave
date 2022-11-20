@@ -35,6 +35,8 @@ namespace SyncWave
                 champion.Init();
             }
             Logger.Log($"Setting up Misc");
+            if (Env.ModuleVersion == V.InTesting)
+                TestDamage.Init();
             new AutoUser().Init();
             new MinionMarker().Init();
             new MoreDrawings().Init();

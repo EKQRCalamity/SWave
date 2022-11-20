@@ -162,7 +162,6 @@ namespace SyncWave.Misc
 
         internal bool HasCleanse()
         {
-            Logger.Log($"Sum1: {Env.Spells.GetSpellClass(SpellSlot.Summoner1).SpellData.SpellName} Sum2: {Env.Spells.GetSpellClass(SpellSlot.Summoner2).SpellData.SpellName}");
             if (Env.Spells.GetSpellClass(SpellSlot.Summoner1).SpellData.SpellName.Contains("Boost") && Env.Spells.GetSpellClass(SpellSlot.Summoner1).IsSpellReady)
             {
                 ShieldSlot = CastSlot.Summoner1;
@@ -178,7 +177,6 @@ namespace SyncWave.Misc
 
         internal CastSlot? CleanseCastSlot()
         {
-            Logger.Log($"Sum1: {Env.Spells.GetSpellClass(SpellSlot.Summoner1).SpellData.SpellName} Sum2: {Env.Spells.GetSpellClass(SpellSlot.Summoner2).SpellData.SpellName}");
             if (Env.Spells.GetSpellClass(SpellSlot.Summoner1).SpellData.SpellName.Contains("Boost") && Env.Spells.GetSpellClass(SpellSlot.Summoner1).IsSpellReady)
             {
                 return CastSlot.Summoner1;
@@ -282,7 +280,8 @@ namespace SyncWave.Misc
         {
             if (!CleanseEnabled || !HasCleanse() || CleanseCastSlot == null)
                 return;
-            Logger.Log(IsCrowdControlledButCanCleanse(Env.Me()));
+            if (Env.ModuleVersion == Common.Enums.V.Development)
+                Logger.Log(IsCrowdControlledButCanCleanse(Env.Me()));
             if (IsCrowdControlledButCanCleanse(Env.Me()))
             {
                 if (CleanseEnemiesNear && new Common.Helper.Selectors.TargetSelector(CleanseRange).XTargetsInRange(1, CleanseRange, Common.Helper.Selectors.Modes.Enemy))

@@ -124,9 +124,18 @@ namespace SyncWave.Misc
         {
             SetupMenu();
             CoreEvents.OnCoreRender += Draw;
+            CoreEvents.OnCoreMainTick += MainTick;
             Render.Init();
             GaleforceDamage = new Damage("GF", 3, new GaleforceCalc(), ColorConverter.GetColorWithAlpha(DrawGaleforceColor, DrawGaleforceAlpha));
             Render.AddDamage(GaleforceDamage);
+        }
+
+        internal Task MainTick()
+        {
+            GaleforceDamage.UpdateColor(ColorConverter.GetColorWithAlpha(DrawGaleforceColor, DrawGaleforceAlpha));
+            GaleforceDamage.UpdatePriority((uint)DrawGaleforcePrio);
+            GaleforceDamage.UpdateName((DrawGaleforceMode == "AboveHPBar") ? "" : "GF");
+            return Task.CompletedTask;
         }
 
         internal bool HasCollector()
@@ -171,15 +180,9 @@ namespace SyncWave.Misc
                 if (HasGaleforce() && DrawGaleforceDamage)
                 {
                     GaleforceDamage.IsOn = true;
-                    GaleforceDamage.UpdateColor(ColorConverter.GetColorWithAlpha(DrawGaleforceColor, DrawGaleforceAlpha));
-                    GaleforceDamage.UpdatePriority((uint)DrawGaleforcePrio);
-                    GaleforceDamage.UpdateName((DrawGaleforceMode == "AboveHPBar") ? "" : "GF");
                     return;
                 }
                 GaleforceDamage.IsOn = false;
-                GaleforceDamage.UpdateColor(ColorConverter.GetColorWithAlpha(DrawGaleforceColor, DrawGaleforceAlpha));
-                GaleforceDamage.UpdatePriority((uint)DrawGaleforcePrio);
-                GaleforceDamage.UpdateName((DrawGaleforceMode == "AboveHPBar") ? "" : "GF");
             }
         }
     }

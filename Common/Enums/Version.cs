@@ -12,6 +12,7 @@ namespace SyncWave.Common.Enums
         None = 0,
         Stable = 1,
         Preview = 2,
-        Development = 3
+        Development = 3,
+        InTesting = 4
     }
 }
