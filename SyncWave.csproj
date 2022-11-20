@@ -4,7 +4,7 @@
     <TargetFramework>net6.0-windows7</TargetFramework>
 	<UseWindowsForms>true</UseWindowsForms>
     <Nullable>enable</Nullable>
-    <Version>1.4.12.3</Version>
+    <Version>1.5.1.4</Version>
     <Title>SyncWave</Title>
     <Authors>EKQR Kotlin</Authors>
 	<CopyTargetDir>C:\Program Files\I7f53a5fd799a0be39615833538288f41lf\Modules\</CopyTargetDir>

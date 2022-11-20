@@ -266,10 +266,10 @@ namespace SyncWave.Misc
             if (Smite.SpellData.SpellName.Contains("SummonerSmite") && Smite.IsSpellReady)
             {
                 if (Smite.SpellData.SpellName.Contains("SmiteDuel") || Smite.SpellData.SpellName.Contains("SmitePlayerGanker"))
-                    return 900;
+                    return 899;
                 if (Smite.SpellData.SpellName.Contains("SmiteAvatar"))
-                    return 1200;
-                return 600;
+                    return 1199;
+                return 599;
             }
             return 0;
         }

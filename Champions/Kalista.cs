@@ -22,15 +22,8 @@ using System.Threading.Tasks;
 namespace SyncWave.Champions
 {
     #region DamageCalculation
-    internal static class Kill
-    {
-        internal static bool CanKill(this GameObjectBase target, float damage)
-        {
-            return target.Health - damage < 0;
-        }
-    }
 
-    internal class QDamageCalc : DamageCalculation
+    internal class KalistaQDamageCalc : DamageCalculation
     {
         internal bool QCanTransferToTarget(Prediction.MenuSelected.PredictionOutput prediction)
         {
@@ -55,7 +48,7 @@ namespace SyncWave.Champions
         }
     }
 
-    internal class EDamageCalc : DamageCalculation
+    internal class KalistaEDamageCalc : DamageCalculation
     {
         internal float GetEStacks(GameObjectBase target)
         {
@@ -96,9 +89,9 @@ namespace SyncWave.Champions
     internal class Kalista : SyncWave.Base.Champion
     {
         #region Statics/Stats
-        internal static QDamageCalc QCalc = new QDamageCalc();
+        internal static KalistaQDamageCalc QCalc = new();
 
-        internal static EDamageCalc ECalc = new EDamageCalc();
+        internal static KalistaEDamageCalc ECalc = new();
 
         internal static Damage? _QDamage;
         internal static Damage? _EDamage;
