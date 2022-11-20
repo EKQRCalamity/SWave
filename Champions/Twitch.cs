@@ -157,7 +157,7 @@ namespace SyncWave.Champions
                 {
                     Vector2 pos = Env.Me().Position.ToW2S();
                     pos.Y -= 20;
-                    RenderFactory.DrawText($"{qTime.ToString("n2")}s", 12, pos, new Color(Color.Black.ToColor3(), 0.8F), true);
+                    RenderFactory.DrawText($"{qTime.ToString("n2")}s", pos, new Color(Color.Black.ToColor3(), 0.8F), true);
                 }
             }
         }

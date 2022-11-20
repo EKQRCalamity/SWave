@@ -141,7 +141,7 @@ namespace SyncWave.Misc
             Vector2 position = minion.HealthBarScreenPosition;
             position.X += 1;
             position.Y -= 2;
-            RenderFactory.DrawText("⦾", 15, position, GetColor(minion));
+            RenderFactory.DrawText("⦾", position, GetColor(minion));
         }
 
         internal void DrawCircle(Minion minion, bool filled)

@@ -206,7 +206,7 @@ namespace SyncWave.Champions
                 {
                     if (IsMode(DrawGroupIndex, DrawQPosMode, "Name"))
                     {
-                        RenderFactory.DrawText("The Ball", 14, QPosition().ToW2S(), new Color(Color.Black.ToColor3(), 0.8F), true);
+                        RenderFactory.DrawText("The Ball", QPosition().ToW2S(), new Color(Color.Black.ToColor3(), 0.8F), true);
                     }
                     else if (IsMode(DrawGroupIndex, DrawQPosMode, "Range"))
                     {
@@ -214,7 +214,7 @@ namespace SyncWave.Champions
                     }
                     else
                     {
-                        RenderFactory.DrawText("The Ball", 14, QPosition().ToW2S(), new Color(Color.Black.ToColor3(), 0.8F), true);
+                        RenderFactory.DrawText("The Ball", QPosition().ToW2S(), new Color(Color.Black.ToColor3(), 0.8F), true);
                         RenderFactory.DrawNativeCircle(QPosition(), 60, new Color(Color.Black.ToColor3(), 0.8F), 1);
                     }
                 }

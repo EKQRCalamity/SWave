@@ -188,7 +188,7 @@ namespace SyncWave.Champions
                         {
                             Vector2 pos = enemy.Position.ToW2S();
                             pos.Y += 40;
-                            RenderFactory.DrawText("Can Kill", 14, pos, new Color(Color.Red.ToColor3(), 0.85F));
+                            RenderFactory.DrawText("Can Kill", pos, new Color(Color.Red.ToColor3(), 0.85F));
                         }
                         else if (MenuManagerProvider.GetTab(TabIndex).GetGroup(DrawGroupIndex).GetItem<ModeDisplay>(DrawRCanKillModeIndex).SelectedModeName == "Circle")
                         {

@@ -168,7 +168,7 @@ namespace SyncWave.Champions
                         {
                             Vector3 pos = enemy.Position;
                             //pos.Y += 50;
-                            RenderFactory.DrawText("Can Kill", 14, pos.ToW2S(), new Color(Color.Red.ToColor3(), 55F), true);
+                            RenderFactory.DrawText("Can Kill", pos.ToW2S(), new Color(Color.Red.ToColor3(), 55F), true);
                         } else if (isOn(DrawGroupIndex, DamageIndex) && MenuManager.GetTab(TabIndex).GetGroup(DrawGroupIndex).GetItem<ModeDisplay>(DrawDamageModeIndex).SelectedModeName == "Mixed")
                         {
                             RenderFactory.DrawHPBarDamage(enemy, R.GetDamage(enemy));
