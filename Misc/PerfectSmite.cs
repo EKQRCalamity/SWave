@@ -291,7 +291,7 @@ namespace SyncWave.Misc
             {
                 Vector2 pos = Env.Me().Position.ToW2S();
                 pos.Y += 30;
-                RenderFactory.DrawText("Auto smite on", 12, pos, Color.Black, true);
+                RenderFactory.DrawText("Auto smite on", pos, Color.Black, true);
             }
             if (!DrawDamage)
                 return;
