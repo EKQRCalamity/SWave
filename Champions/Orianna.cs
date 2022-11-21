@@ -25,7 +25,7 @@ namespace SyncWave.Champions
 {
     internal class Orianna : SyncWave.Base.Champion
     {
-        internal override List<Combo> Combos => new() { new SyncWave.Combos.Orianna.General(), new SyncWave.Combos.Orianna.Trade(), new SyncWave.Combos.Orianna.TradeWithE() };
+        internal List<Combo> Combos => new() { new SyncWave.Combos.Orianna.General(), new SyncWave.Combos.Orianna.Trade(), new SyncWave.Combos.Orianna.TradeWithE() };
 
         internal static Combo? currentCombo = null;
 

@@ -25,7 +25,7 @@ namespace SyncWave.Champions
 {
     internal class Tahmkench : SyncWave.Base.Champion
     {
-        internal override List<Combo> Combos => new()
+        internal List<Combo> Combos => new()
         {
             new Combos.Tahmkench.General()
         };

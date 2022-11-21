@@ -25,7 +25,7 @@ namespace SyncWave.Champions
 {
     internal class Twitch : SyncWave.Base.Champion
     {
-        internal override List<Combo> Combos => new()
+        internal List<Combo> Combos => new()
         {
             new Combos.Twitch.General()
             

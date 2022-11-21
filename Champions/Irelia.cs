@@ -25,7 +25,6 @@ namespace SyncWave.Champions
     internal class Irelia : Base.Champion
     {
 
-        internal override List<Combo> Combos => new() { new Combos.None() };
         internal int TickCycles = 0;
         internal Common.Helper.Selectors.TargetSelector TS = new(600);
 

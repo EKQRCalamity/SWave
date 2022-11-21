@@ -96,7 +96,6 @@ namespace SyncWave.Champions
         internal static Damage? _QDamage;
         internal static Damage? _EDamage;
 
-        internal override List<Combo> Combos => new();
         
         internal int TickCycles = 0;
         internal static Hero? BoundAlly { get; set; }

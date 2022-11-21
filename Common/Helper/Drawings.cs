@@ -169,13 +169,27 @@ namespace SyncWave.Common.Helper
 
             float tempHealth = target.Health;
 
+            List<float> damages = new();
+            List<Color> colors = new();
+            List<string> names = new();
+
             for (int i = 0; i < damageList.Count; i++)
             {
                 float prioDamage = damageList[i].GetDamage(target);
+                float tempPrioDamage = prioDamage;
                 tempHealth -= prioDamage;
+                float tempFullDamage = (target.Health - tempHealth);
+                if (tempFullDamage > target.Health)
+                    tempPrioDamage = prioDamage - (tempFullDamage - target.Health);
                 if ((tempHealth) >= -(prioDamage))
                 {
                     actualDmgList.Add(damageList[i]);
+                    Damage damage = damageList[i];
+                    damages.Add(damage.GetDamage(target));
+                    colors.Add(damage.Color);
+                    if (tempPrioDamage / target.MaxHealth * 100 <= Render.Threshold && Env.ModuleVersion == Enums.V.InTesting)
+                        Logger.Log($"Remove name for : {damage.Name}");
+                    names.Add((tempPrioDamage / target.MaxHealth * 100 <= Render.Threshold) ? "" : damage.Name);
                     if (Env.ModuleVersion == Enums.V.InTesting)
                     {
                         Logger.Log($"Added: {damageList[i].Name}.");
@@ -184,7 +198,6 @@ namespace SyncWave.Common.Helper
                 {
                     if (Env.ModuleVersion == Enums.V.InTesting)
                     {
-
                         Logger.Log($"Skipped: {damageList[i].Name}.");
                     }
                     break;
@@ -192,24 +205,10 @@ namespace SyncWave.Common.Helper
             }
 
             actualDmgList = actualDmgList.OrderByDescending(x => x.Priority).ToList();
-
-            List<float> damages = new();
-            List<Color> colors = new();
-            List<string> names = new();
-            for (int i = 0; i < actualDmgList.Count; i++)
-            {
-                Damage damage = actualDmgList[i];
-                damages.Add(damage.GetDamage(target));
-                colors.Add(damage.Color);
-                names.Add(damage.Name);
-            }
-
-
             if (damages.Count != colors.Count || damages.Count != names.Count)
                 return;
 
             float fullDamage = 0;
-
             foreach (Damage damage in actualDmgList)
             {
                 fullDamage += damage.GetDamage(target);

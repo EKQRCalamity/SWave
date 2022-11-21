@@ -13,7 +13,6 @@ namespace SyncWave.Base
 {
     internal abstract class Champion
     {
-        internal abstract List<Combo> Combos { get; }
         // Thanks to Six!!! https://github.com/SiXZZZ/SixAIO/blob/341d50e497d561242cbf8003c50ad12aa9830117/src/SixAIO.NET/Models/Champion.cs#L214
         internal static Champion? GetFromName(string name)
         {

@@ -19,7 +19,7 @@ namespace SyncWave.Champions
 {
     internal class Kogmaw : SyncWave.Base.Champion
     {
-        internal override List<Combo> Combos => new()
+        internal List<Combo> Combos => new()
         {
             new SyncWave.Combos.Kogmaw.General(),
             new SyncWave.Combos.Kogmaw.RKillSteal()

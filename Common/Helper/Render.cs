@@ -2,10 +2,12 @@
 using Oasys.Common.Extensions;
 using Oasys.Common.GameObject;
 using Oasys.Common.GameObject.ObjectClass;
+using Oasys.Common.Menu.ItemComponents;
 using Oasys.SDK;
 using Oasys.SDK.Tools;
 using SharpDX;
 using SyncWave.Base;
+using SyncWave.Misc;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -82,10 +84,14 @@ namespace SyncWave.Common.Helper
             return Damages.Contains(damage);
         }
 
+        internal static int Threshold => Menu.tab.GetItem<Counter>("Remove name threshold (HP%)").Value;
+
         internal static void Init()
         {
             if (Initialized) return;
             CoreEvents.OnCoreRender += Draw;
+            int MiscTabIndex = Menu.Init();
+            Menu.tab.AddItem(new Counter("Remove name threshold (HP%)", 7, 0, 100));
             Initialized = true;
         }
 
