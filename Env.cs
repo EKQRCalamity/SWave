@@ -22,7 +22,7 @@ namespace SyncWave
         internal static bool RReady => Env.Spells.GetSpellClass(SpellSlot.R).IsSpellReady;
 
 
-        internal static List<string> SupportedChamps = new List<string>() { "Orianna", "Twitch", "KogMaw", "TahmKench", "Kalista", "Irelia" };
-        internal static V ModuleVersion => V.InTesting;
+        internal static List<string> SupportedChamps = new List<string>() { "Orianna", "Twitch", "KogMaw", "TahmKench", "Kalista", "Irelia", "Graves" };
+        internal static V ModuleVersion => V.Stable;
     }
 }

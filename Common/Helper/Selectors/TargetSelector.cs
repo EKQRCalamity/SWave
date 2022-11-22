@@ -58,7 +58,7 @@ namespace SyncWave.Common.Helper.Selectors
                 }
                 catch (Exception ex)
                 {
-                    EnemyIndexes.Add($"{hero.Name}-{hero.ModelName}-{hero.EncryptedID}", EnemyGroup.AddItem(new Counter() { Title = $"{hero.ModelName}-{hero.EncryptedID} Prio", MinValue = 0, MaxValue = 5, Value = 1, ValueFrequency = 1 }));
+                    //EnemyIndexes.Add($"{hero.Name}-{hero.ModelName}-{hero.EncryptedID}", EnemyGroup.AddItem(new Counter() { Title = $"{hero.ModelName}-{hero.EncryptedID} Prio", MinValue = 0, MaxValue = 5, Value = 1, ValueFrequency = 1 }));
                 }
             }
             Group AllyGroup = new Group("Allies");
@@ -75,7 +75,7 @@ namespace SyncWave.Common.Helper.Selectors
                 }
                 catch (Exception ex)
                 {
-                    AllyIndexes.Add($"{hero.Name}-{hero.ModelName}-{hero.EncryptedID}", AllyGroup.AddItem(new Counter() { Title = $"{hero.ModelName}-{hero.EncryptedID} Prio", MinValue = 0, MaxValue = 5, Value = 1, ValueFrequency = 1 }));
+                    //AllyIndexes.Add($"{hero.Name}-{hero.ModelName}-{hero.EncryptedID}", AllyGroup.AddItem(new Counter() { Title = $"{hero.ModelName}-{hero.EncryptedID} Prio", MinValue = 0, MaxValue = 5, Value = 1, ValueFrequency = 1 }));
 
                 }
             }

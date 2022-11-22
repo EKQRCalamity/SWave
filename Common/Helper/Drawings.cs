@@ -165,14 +165,11 @@ namespace SyncWave.Common.Helper
             if (damageList.Count == 0) return;
             damageList = damageList.OrderByDescending(x => x.Priority).ToList();
 
-            List<Damage> actualDmgList = new();
-
             float tempHealth = target.Health;
-
+            List<Damage> actualDmgList = new();
             List<float> damages = new();
             List<Color> colors = new();
             List<string> names = new();
-
             for (int i = 0; i < damageList.Count; i++)
             {
                 float prioDamage = damageList[i].GetDamage(target);

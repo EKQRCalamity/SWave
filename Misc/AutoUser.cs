@@ -6,8 +6,10 @@ using Oasys.Common.Menu;
 using Oasys.Common.Menu.ItemComponents;
 using Oasys.SDK.Events;
 using Oasys.SDK.Menu;
+using Oasys.SDK.Rendering;
 using Oasys.SDK.SpellCasting;
 using Oasys.SDK.Tools;
+using SharpDX;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -47,6 +49,9 @@ namespace SyncWave.Misc
         internal static int CleanseGroupIndex = -1;
         internal static Group? CleanseGroup;
         internal static int CleanseEnabledIndex = -1;
+        internal static int MikaelsEnabledIndex = -1;
+        internal static int MercurialEnabledIndex = -1;
+        internal static int SilvermereEnabledIndex = -1;
         internal static int CleanseCastModeIndex = -1;
         internal static int CleanseWhenEnemiesNearIndex = -1;
         internal static int CleanseNearRangeIndex = -1;
@@ -61,6 +66,9 @@ namespace SyncWave.Misc
         internal bool HealEnabled => healGroup.GetItem<Switch>(HealEnabledIndex).IsOn;
         internal bool ShieldEnabled => shieldGroup.GetItem<Switch>(ShieldEnabledIndex).IsOn;
         internal bool CleanseEnabled => cleanseGroup.GetItem<Switch>(CleanseEnabledIndex).IsOn;
+        internal bool MikaelsEnabled => cleanseGroup.GetItem<Switch>(MikaelsEnabledIndex).IsOn;
+        internal bool MercurialEnabled => cleanseGroup.GetItem<Switch>(MercurialEnabledIndex).IsOn;
+        internal bool SilvermereEnabled => cleanseGroup.GetItem<Switch>(SilvermereEnabledIndex).IsOn;
         internal int PotHP => potGroup.GetItem<Counter>(PotHPCounterIndex).Value;
         internal int HealHP => healGroup.GetItem<Counter>(HealHPCounterIndex).Value;
         internal int ShieldHP => shieldGroup.GetItem<Counter>(ShieldHPCounterIndex).Value;
@@ -85,11 +93,11 @@ namespace SyncWave.Misc
         internal CastSlot? PotSlot = null;
         internal CastSlot? HealSlot = null;
         internal CastSlot? ShieldSlot = null;
+        internal CastSlot? MercurialSlot = null;
+        internal CastSlot? MikaelsSlot = null;
+        internal CastSlot? SilvermereSlot = null;
         internal CastSlot? CleanseSlot = null;
 
-        internal int HealthPotionId = 2003;
-        internal int RefillablePotionId = 2031;
-        internal int CorruptionhPotionId = 2033;
         internal bool HasPots()
         {
             foreach (Item item in Env.Me().Inventory.GetItemList())
@@ -101,6 +109,69 @@ namespace SyncWave.Misc
                 }
             }
             return false;
+        }
+
+        internal bool HasMercurial()
+        {
+            if (MercurialCastSlot() != null)
+                return true;
+            MercurialSlot = null;
+            return false;
+        }
+
+        internal CastSlot? MercurialCastSlot()
+        {
+            foreach (Item item in Env.Me().Inventory.GetItemList())
+            {
+                if (item.ID == ItemID.Mercurial_Scimitar && item.IsReady)
+                {
+                    MercurialSlot = (CastSlot)item.SpellCastSlot;
+                    return MercurialSlot;
+                }
+            }
+            return null;
+        }
+
+        internal bool HasMikaels()
+        {
+            if (MikaelsCastSlot() != null)
+                return true;
+            MikaelsSlot = null;
+            return false;
+        }
+
+        internal CastSlot? MikaelsCastSlot()
+        {
+            foreach (Item item in Env.Me().Inventory.GetItemList())
+            {
+                if (item.ID == ItemID.Mikaels_Blessing && item.IsReady)
+                {
+                    MikaelsSlot = (CastSlot)item.SpellCastSlot;
+                    return MikaelsSlot;
+                }
+            }
+            return null;
+        }
+
+        internal bool HasSilvermere()
+        {
+            if (SilvermereCastSlot() != null)
+                return true;
+            SilvermereSlot = null;
+            return false;
+        }
+
+        internal CastSlot? SilvermereCastSlot()
+        {
+            foreach (Item item in Env.Me().Inventory.GetItemList())
+            {
+                if (item.ID == ItemID.Silvermere_Dawn && item.IsReady)
+                {
+                    SilvermereSlot = (CastSlot)item.SpellCastSlot;
+                    return SilvermereSlot;
+                }
+            }
+            return null;
         }
 
         internal bool HasHeal()
@@ -164,12 +235,12 @@ namespace SyncWave.Misc
         {
             if (Env.Spells.GetSpellClass(SpellSlot.Summoner1).SpellData.SpellName.Contains("Boost") && Env.Spells.GetSpellClass(SpellSlot.Summoner1).IsSpellReady)
             {
-                ShieldSlot = CastSlot.Summoner1;
+                CleanseSlot = CastSlot.Summoner1;
                 return true;
             }
             else if (Env.Spells.GetSpellClass(SpellSlot.Summoner2).SpellData.SpellName.Contains("Boost") && Env.Spells.GetSpellClass(SpellSlot.Summoner2).IsSpellReady)
             {
-                ShieldSlot = CastSlot.Summoner2;
+                CleanseSlot = CastSlot.Summoner2;
                 return true;
             }
             return false;
@@ -264,7 +335,7 @@ namespace SyncWave.Misc
 
         internal static bool IsCrowdControlledButCanCleanse<T>(T obj) where T : GameObjectBase
         {
-            if (Env.ModuleVersion == Common.Enums.V.Development)
+            if (Env.ModuleVersion >= Common.Enums.V.Development)
             {
                 BuffEntry? buff = obj.BuffManager.GetBuffList().FirstOrDefault(x => IsCrowdControllButCanCleanse(x, false));
                 if (buff != null)
@@ -278,19 +349,38 @@ namespace SyncWave.Misc
 
         internal void UseCleanse()
         {
-            if (!CleanseEnabled || !HasCleanse() || CleanseCastSlot == null)
-                return;
             if (Env.ModuleVersion == Common.Enums.V.Development)
                 Logger.Log(IsCrowdControlledButCanCleanse(Env.Me()));
             if (IsCrowdControlledButCanCleanse(Env.Me()))
             {
-                if (CleanseEnemiesNear && new Common.Helper.Selectors.TargetSelector(CleanseRange).XTargetsInRange(1, CleanseRange, Common.Helper.Selectors.Modes.Enemy))
+                if (!CleanseEnemiesNear || CleanseEnemiesNear && new Common.Helper.Selectors.TargetSelector(CleanseRange).XTargetsInRange(1, CleanseRange, Common.Helper.Selectors.Modes.Enemy))
                 {
-                    SpellCastProvider.CastSpell((CastSlot)CleanseCastSlot());
-                }
-                else if (!CleanseEnemiesNear)
-                {
-                    SpellCastProvider.CastSpell((CastSlot)CleanseCastSlot());
+                    HasCleanse();
+                    if (CleanseCastSlot != null && HasCleanse() && CleanseEnabled)
+                    {
+                        SpellCastProvider.CastSpell((CastSlot)CleanseCastSlot());
+                        return;
+                    }
+                    HasMercurial();
+                    if (MercurialSlot != null && HasMercurial() && MercurialEnabled)
+                    {
+                        SpellCastProvider.CastSpell((CastSlot)MercurialCastSlot());
+                        return;
+                    }
+                    HasSilvermere();
+                    if (SilvermereSlot != null && HasSilvermere() && SilvermereEnabled)
+                    {
+                        SpellCastProvider.CastSpell((CastSlot)SilvermereCastSlot());
+                        return;
+                    }
+                    HasMikaels();
+                    if (MikaelsSlot != null && HasMikaels() && MikaelsEnabled)
+                    {
+                        Vector3 pos = Env.Me().Position;
+                        pos.Y += 10;
+                        SpellCastProvider.CastSpell((CastSlot)MikaelsCastSlot(), pos);
+                        return;
+                    }
                 }
             }
         }
@@ -314,7 +404,7 @@ namespace SyncWave.Misc
                 {
                     UseShield();
                 }
-                if (CleanseEnabled && CleanseCastMode == "OnTick")
+                if (CleanseEnabled || MercurialEnabled || SilvermereEnabled || MikaelsEnabled && CleanseCastMode == "OnTick")
                 {
                     UseCleanse();
                 }
@@ -340,7 +430,7 @@ namespace SyncWave.Misc
                 {
                     UseShield();
                 }
-                if (CleanseEnabled && CleanseCastMode == "InCombo")
+                if (CleanseEnabled || MercurialEnabled || SilvermereEnabled || MikaelsEnabled && CleanseCastMode == "InCombo")
                 {
                     UseCleanse();
                 }
@@ -363,7 +453,10 @@ namespace SyncWave.Misc
             PotEnabledIndex = PotGroup.AddItem(new Switch() { Title = "Enabled", IsOn = false });
             HealEnabledIndex = HealGroup.AddItem(new Switch() { Title = "Enabled", IsOn = false });
             ShieldEnabledIndex = ShieldGroup.AddItem(new Switch() { Title = "Enabled", IsOn = false });
-            CleanseEnabledIndex = CleanseGroup.AddItem(new Switch() { Title = "Enabled", IsOn = false });
+            CleanseEnabledIndex = CleanseGroup.AddItem(new Switch() { Title = "Cleanse Enabled", IsOn = false });
+            MercurialEnabledIndex = CleanseGroup.AddItem(new Switch("Mercurial Enabled", true));
+            MikaelsEnabledIndex = CleanseGroup.AddItem(new Switch("Mikaels Enabled", true));
+            SilvermereEnabledIndex = CleanseGroup.AddItem(new Switch("Silvermere Enabled", true));
             PotHPCounterIndex = PotGroup.AddItem(new Counter() { Title = "Pot usage HP%", Value = 20, MaxValue = 100, MinValue = 0 });
             HealHPCounterIndex = HealGroup.AddItem(new Counter() { Title = "Heal usage HP%", Value = 20, MaxValue = 100, MinValue = 0 });
             ShieldHPCounterIndex = ShieldGroup.AddItem(new Counter() { Title = "Shield usage HP%", Value = 20, MaxValue = 100, MinValue = 0 });
