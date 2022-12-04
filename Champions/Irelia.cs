@@ -42,7 +42,7 @@ namespace SyncWave.Champions
             GameObjectBase? retobj = null;
             foreach (GameObjectBase obj in UnitManager.AllNativeObjects)
             {
-                if (__EObj.Name.Contains("Base_E_Blades", StringComparison.OrdinalIgnoreCase))
+                if (obj.Name.Contains("Base_E_Blades", StringComparison.OrdinalIgnoreCase))
                 {
                     retobj = obj;
                     break;

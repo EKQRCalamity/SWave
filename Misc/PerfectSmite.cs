@@ -40,6 +40,8 @@ namespace SyncWave.Misc
         internal static int DrawBuffsIndex = -1;
         internal static int UseEpicIndex = -1;
         internal static int DrawEpicIndex = -1;
+        internal static Switch DrawSmiteRange = new Switch("Draw Smite Range", true);
+        internal static ModeDisplay RangeColor = new ModeDisplay("Range Color", Color.Red);
         #endregion
 
         internal static bool KeyIsToggled = false;
@@ -73,6 +75,8 @@ namespace SyncWave.Misc
             DrawBuffsIndex = group.AddItem(new Switch() { Title = "Draw for Buffs", IsOn = false });
             UseEpicIndex = group.AddItem(new Switch() { Title = "Use on Epic Monsters", IsOn = true });
             DrawEpicIndex = group.AddItem(new Switch() { Title = "Draw for Epic Monsters", IsOn = true });
+            group.AddItem(DrawSmiteRange);
+            group.AddItem(RangeColor);
         }
 
         internal Group Group
@@ -292,6 +296,13 @@ namespace SyncWave.Misc
                 Vector2 pos = Env.Me().Position.ToW2S();
                 pos.Y += 30;
                 RenderFactory.DrawText("Auto smite on", pos, Color.Black, true);
+            }
+            if (DrawSmiteRange.IsOn && GetSmite() != null)
+            {
+                if (Mode == "ToggleKey" && KeyIsToggled || Mode != "ToggleKey")
+                {
+                    RenderFactory.DrawNativeCircle(Env.Me().Position, 500, ColorConverter.GetColor(RangeColor.SelectedModeName, Oasys.SDK.Menu.MenuManager.GetTab("Drawings").GetGroup("My Range").GetItem<Counter>("My Range Color Alpha").Value), 2);
+                }
             }
             if (!DrawDamage)
                 return;

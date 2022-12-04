@@ -1,38 +1,121 @@
-﻿
-
-using Oasys.Common.EventsProvider;
+﻿using Oasys.Common.EventsProvider;
 using Oasys.Common.Extensions;
 using Oasys.Common.GameObject;
+using Oasys.Common.GameObject.Clients;
 using Oasys.Common.GameObject.Clients.ExtendedInstances;
 using Oasys.Common.GameObject.ObjectClass;
 using Oasys.Common.Menu;
 using Oasys.Common.Menu.ItemComponents;
 using Oasys.SDK;
 using Oasys.SDK.Menu;
-using Oasys.SDK.Rendering;
+using Oasys.SDK.SpellCasting;
 using Oasys.SDK.Tools;
 using SharpDX;
 using SyncWave.Base;
-using SyncWave.Combos.Orianna;
 using SyncWave.Common.Extensions;
+using SyncWave.Common.Helper;
+using SyncWave.Misc;
 using System;
 using System.Collections.Generic;
-using System.Data;
 using System.Linq;
+using System.Text;
 using System.Threading.Tasks;
 
 namespace SyncWave.Champions
 {
-    internal class Orianna : SyncWave.Base.Champion
+    internal class QOriannaCalc : DamageCalculation
     {
-        internal List<Combo> Combos => new() { new SyncWave.Combos.Orianna.General(), new SyncWave.Combos.Orianna.Trade(), new SyncWave.Combos.Orianna.TradeWithE() };
+        internal static int[] Damage = new int[] { 0, 60, 90, 120, 150, 180 };
 
-        internal static Combo? currentCombo = null;
+        internal static float APScaling = 0.5F;
 
-        internal static QCast Q = new Combos.Orianna.QCast();
-        internal static WCast W = new Combos.Orianna.WCast();
-        internal static ECast E = new Combos.Orianna.ECast();
-        internal static RCast R = new Combos.Orianna.RCast();
+        internal override float CalculateDamage(GameObjectBase target)
+        {
+            if (Env.QReady && Env.QLevel >= 1)
+            {
+                return DamageCalculator.CalculateActualDamage(
+                    Env.Me(),
+                    target,
+                    0,
+                    (Damage[Env.QLevel] + (Env.Me().UnitStats.TotalAbilityPower * APScaling)),
+                    0
+                    );
+            }
+            return 0;
+        }
+    }
+
+    internal class WOriannaCalc : DamageCalculation
+    {
+        internal static int[] Damage = new int[] { 0, 60, 105, 150, 195, 240 };
+        internal static float APScaling = 0.7F;
+
+        internal override float CalculateDamage(GameObjectBase target)
+        {
+            if (Env.WReady&& Env.WLevel >= 1)
+            {
+                return DamageCalculator.CalculateActualDamage(
+                    Env.Me(),
+                    target,
+                    0,
+                    (Damage[Env.WLevel] + (Env.Me().UnitStats.TotalAbilityPower * APScaling)),
+                    0
+                    );
+            }
+            return 0;
+        }
+    }
+
+    internal class EOriannaCalc : DamageCalculation
+    {
+        internal static int[] Damage = new int[] { 0, 60, 90, 120, 150, 180 };
+        internal static float APScaling = 0.3F;
+
+        internal override float CalculateDamage(GameObjectBase target)
+        {
+            if (Env.EReady && Env.ELevel >= 1)
+            {
+                return DamageCalculator.CalculateActualDamage(
+                    Env.Me(),
+                    target,
+                    0,
+                    (Damage[Env.ELevel] + (Env.Me().UnitStats.TotalAbilityPower * APScaling)),
+                    0
+                    );
+            }
+            return 0;
+        }
+    }
+
+    internal class ROriannaCalc : DamageCalculation
+    {
+        internal static int[] Damage = new int[] { 0, 200, 275, 350 };
+        internal static float APScaling = 0.8F;
+
+        internal override float CalculateDamage(GameObjectBase target)
+        {
+            if (Env.RReady && Env.RLevel >= 1)
+            {
+                return DamageCalculator.CalculateActualDamage(
+                    Env.Me(),
+                    target,
+                    0,
+                    (Damage[Env.RLevel] + (Env.Me().UnitStats.TotalAbilityPower * APScaling)),
+                    0
+                    );
+            }
+            return 0;
+        }
+    }
+
+    internal class Orianna : Champion
+    {
+        #region Logic
+
+        internal bool CanCastQ() => Env.QReady && QEnabled.IsOn && Env.Me().enoughMana(QManaCost[Env.QLevel]) && Env.Me().IsAlive;
+        internal bool CanCastW() => Env.WReady && WEnabled.IsOn && Env.Me().enoughMana(WManaCost[Env.WLevel]) && Env.Me().IsAlive;
+        internal bool CanCastE() => Env.EReady && EEnabled.IsOn && Env.Me().enoughMana(EManaCost[Env.ELevel]) && Env.Me().IsAlive;
+        internal bool CanCastR() => Env.RReady && REnabled.IsOn && Env.Me().enoughMana(RManaCost[Env.RLevel]) && Env.Me().IsAlive;
 
         internal static GameObjectBase Ball { get; set; } = UnitManager.AllNativeObjects.FirstOrDefault(x => x.Name == "TheDoomBall" && x.IsAlive && x.Health >= 1);
 
@@ -60,34 +143,61 @@ namespace SyncWave.Champions
         }
 
         internal static Vector3 GetBallPosition()
-        { 
+        {
             if (Ball == null)
             {
                 Hero? holder = getBallHolder();
                 if (holder != null)
                 {
                     return holder.Position;
-                } else
+                }
+                else
                 {
                     return Env.Me().Position;
                 }
 
-            } else
+            }
+            else
             {
                 return Ball.Position;
             }
         }
-        //(Ball == null)? Env.Me().Position : (IsBallOnMe())? Env.Me().Position : Ball.Position
+        
         internal static Vector3 QPosition() => GetBallPosition();
-        internal static Vector3 qPosition => QPosition();
 
+        internal static int EnemiesInRange(float range, Vector3 originPos)
+        {
+            int n = 0;
+            foreach (GameObjectBase enemy in UnitManager.EnemyChampions)
+            {
+                if (enemy.DistanceTo(originPos) < range)
+                    n++;
+            }
+            return n;
+        }
 
-        internal static GameObjectBase? currentTarget = null;
+        internal static bool EnemiesInRange(float n, float range, Vector3 originPos)
+        {
+            return EnemiesInRange(range, originPos) >= n;
+        }
+
+        #endregion
+
+        #region Stats
+        internal static QOriannaCalc QCalc = new();
+        internal static WOriannaCalc WCalc = new();
+        internal static EOriannaCalc ECalc = new();
+        internal static ROriannaCalc RCalc = new();
+
+        internal static Damage? _QDamage;
+        internal static Damage? _WDamage;
+        internal static Damage? _EDamage;
+        internal static Damage? _RDamage;
 
         internal static int[] QManaCost = new int[] { 0, 30, 35, 40, 45, 50 };
         internal static int[] WManaCost = new int[] { 0, 70, 80, 90, 100, 110 };
         internal static int[] EManaCost = new int[] { 0, 60, 60, 60, 60, 60 };
-        internal static int[] RManaCost = new int[] { 0, 100, 100, 100};
+        internal static int[] RManaCost = new int[] { 0, 100, 100, 100 };
 
         internal static int[] QDamage = new int[] { 0, 60, 90, 120, 150, 180 };
         internal static int[] WDamage = new int[] { 0, 60, 105, 150, 195, 240 };
@@ -116,155 +226,258 @@ namespace SyncWave.Champions
         internal static int ESpeed = 1850;
 
         internal static int RRadius = 415;
+        #endregion
 
-        internal static int TabIndex = -1;
-        internal static int EnabledIndex = -1;
-        internal static int GroupIndex = -1;
-        internal static int DrawGroupIndex = -1;
-        internal static int DrawQPosition = -1;
-        internal static int DrawQPosMode = -1;
-        internal static int DrawWRadius = -1;
-        internal static int DrawRRadius = -1;
-        internal static int DrawCurrentCombo = -1;
-        internal static int DrawComboDamage = -1;
-        internal static int OnlyDrawWhenNotOnMe = -1;
-        internal static int GroupCombosIndex = -1;
-        internal static int GeneralComboIndex = -1;
-        internal static int TradeComboIndex = -1;
-        internal static int TradeWithEComboIndex = -1;
-        internal static int AbilityGroupIndex = -1;
-        internal static int AbilityQIndex = -1;
-        internal static int AbilityWIndex = -1;
-        internal static int AbilityEIndex = -1;
-        internal static int AbilityRIndex = -1;
-        internal static int AbilityRMinEnemiesHit = -1;
+        #region Menu
+        internal static Tab OriannaTab = new Tab("SyncWave - Orianna");
+        internal static Group QGroup = new Group("Q Settings");
+        internal static Switch QEnabled = new Switch("Enabled", true);
+        internal static ModeDisplay QHitChance = new ModeDisplay() { Title = "Q Hitchance", ModeNames = new() { "Impossible", "Unknown", "OutOfRange", "Dashing", "Low", "Medium", "High", "VeryHigh", "Immobile" }, SelectedModeName = "VeryHigh" };
+        internal static Switch DrawQ = new Switch("Draw Q Damage", true);
+        internal static ModeDisplay DrawQMode = new ModeDisplay() { Title = "Draw Mode", ModeNames = new() { "AboveHPBar", "AboveWithoutName" } };
+        internal static Counter DrawQPrio = new Counter("Draw Prio", 5, 1, 10);
+        internal static InfoDisplay QPrioInfo = new InfoDisplay() { Title = "Prio", Information = "Prio doesnt work for OnHPBar" };
+        internal static ModeDisplay DrawQColor = new ModeDisplay("Draw Color", Color.DodgerBlue);
 
+        internal static Group WGroup = new Group("W Settings");
+        internal static Switch WEnabled = new Switch("Enabled", true);
+        internal static Switch DrawW = new Switch("Draw W Damage", true);
+        internal static ModeDisplay DrawWMode = new ModeDisplay() { Title = "Draw Mode", ModeNames = new() { "AboveHPBar", "AboveWithoutName" } };
+        internal static Counter DrawWPrio = new Counter("Draw Prio", 5, 1, 10);
+        internal static InfoDisplay WPrioInfo = new InfoDisplay() { Title = "Prio", Information = "Prio doesnt work for OnHPBar" };
+        internal static ModeDisplay DrawWColor = new ModeDisplay("Draw Color", Color.DodgerBlue);
+
+        internal static Group EGroup = new Group("E Settings");
+        internal static Switch EEnabled = new Switch("Enabled", true);
+        internal static Switch EShieldEnabled = new Switch("Shield Enabled", true);
+        internal static Counter EShieldHP = new Counter("Shield HP% Threshold", 20, 0, 100);
+        internal static Switch DrawE = new Switch("Draw E Damage", true);
+        internal static ModeDisplay DrawEMode = new ModeDisplay() { Title = "Draw Mode", ModeNames = new() { "AboveHPBar", "AboveWithoutName" } };
+        internal static Counter DrawEPrio = new Counter("Draw Prio", 5, 1, 10);
+        internal static InfoDisplay EPrioInfo = new InfoDisplay() { Title = "Prio", Information = "Prio doesnt work for OnHPBar" };
+        internal static ModeDisplay DrawEColor = new ModeDisplay("Draw Color", Color.DodgerBlue);
+
+        internal static Group RGroup = new Group("R Settings");
+        internal static Switch REnabled = new Switch("Enabled", true);
+        internal static Switch RUseOnKill = new Switch("Use on Kill", true);
+        internal static Counter REnemies = new Counter("Use on enemies near", 2, 0, 5);
+        internal static Switch DrawR = new Switch("Draw R Damage", true);
+        internal static ModeDisplay DrawRMode = new ModeDisplay() { Title = "Draw Mode", ModeNames = new() { "AboveHPBar", "AboveWithoutName" } };
+        internal static Counter DrawRPrio = new Counter("Draw Prio", 5, 1, 10);
+        internal static InfoDisplay RPrioInfo = new InfoDisplay() { Title = "Prio", Information = "Prio doesnt work for OnHPBar" };
+        internal static ModeDisplay DrawRColor = new ModeDisplay("Draw Color", Color.DodgerBlue);
+
+        internal static void InitMenu()
+        {
+            MenuManager.AddTab(OriannaTab);
+            OriannaTab.AddGroup(QGroup);
+            QGroup.AddItem(QEnabled);
+            QGroup.AddItem(QHitChance);
+            QGroup.AddItem(DrawQ);
+            QGroup.AddItem(DrawQMode);
+            QGroup.AddItem(DrawQPrio);
+            QGroup.AddItem(DrawQColor);
+
+            OriannaTab.AddGroup(WGroup);
+            WGroup.AddItem(WEnabled);
+            WGroup.AddItem(DrawW);
+            WGroup.AddItem(DrawWMode);
+            WGroup.AddItem(DrawWPrio);
+            WGroup.AddItem(DrawWColor);
+
+            OriannaTab.AddGroup(EGroup);
+            EGroup.AddItem(EEnabled);
+            EGroup.AddItem(EShieldEnabled);
+            EGroup.AddItem(EShieldHP);
+            EGroup.AddItem(DrawE);
+            EGroup.AddItem(DrawEMode);
+            EGroup.AddItem(DrawEPrio);
+            EGroup.AddItem(DrawEColor);
+
+            OriannaTab.AddGroup(RGroup);
+            RGroup.AddItem(REnabled);
+            RGroup.AddItem(RUseOnKill);
+            RGroup.AddItem(REnemies);
+            RGroup.AddItem(DrawR);
+            RGroup.AddItem(DrawRMode);
+            RGroup.AddItem(DrawRPrio);
+            RGroup.AddItem(DrawRColor);
+        }
+
+        #endregion
         internal override void Init()
         {
-            Logger.Log("Orianna Init Called!");
+            Logger.Log("Orianna Initializing...");
             InitMenu();
-            CoreEvents.OnCoreMainInputAsync += OnCoreMainInput;
             CoreEvents.OnCoreMainTick += OnCoreMainTick;
-            CoreEvents.OnCoreRender += OnCoreRender;
+            CoreEvents.OnCoreMainInputAsync += MainInput;
+            Render.Init();
+            _QDamage = new Damage("Q", (uint)DrawQPrio.Value, QCalc, ColorConverter.GetColor(DrawQColor.SelectedModeName));
+            _WDamage = new Damage("W", (uint)DrawWPrio.Value, WCalc, ColorConverter.GetColor(DrawWColor.SelectedModeName));
+            _EDamage = new Damage("E", (uint)DrawEPrio.Value, ECalc, ColorConverter.GetColor(DrawEColor.SelectedModeName));
+            _RDamage = new Damage("R", (uint)DrawRPrio.Value, RCalc, ColorConverter.GetColor(DrawRColor.SelectedModeName));
+            Render.AddDamage(_QDamage);
+            Render.AddDamage(_WDamage);
+            Render.AddDamage(_EDamage);
+            Render.AddDamage(_RDamage);
+            RangeDrawer.WDisabled = true;
+            RangeDrawer.RDisabled = true;
+            Logger.Log("Orianna Initialized.");
+
         }
 
-        internal void InitMenu()
+        #region Casts
+        internal Prediction.MenuSelected.PredictionOutput PredictQ(GameObjectBase target)
         {
-            Tab OriannaTab = new Tab("SyncWave - Orianna");
-            TabIndex = MenuManagerProvider.AddTab(OriannaTab);
-            EnabledIndex = OriannaTab.AddItem(new Switch() { IsOn = true, Title = "Enabled" });
-            Group AbilityGroup = new Group("Abilities");
-            AbilityQIndex = AbilityGroup.AddItem(new Switch() { IsOn = true, Title = "Q Enabled" });
-            AbilityWIndex = AbilityGroup.AddItem(new Switch() { IsOn = true, Title = "W Enabled" });
-            AbilityEIndex = AbilityGroup.AddItem(new Switch() { IsOn = true, Title = "E Enabled" });
-            AbilityRIndex = AbilityGroup.AddItem(new Switch() { IsOn = true, Title = "R Enabled" });
-            AbilityRMinEnemiesHit = AbilityGroup.AddItem(new Counter() { MinValue = 1, MaxValue = 5, Title = "Enemies in R", Value = 1, ValueFrequency = 1 });
-            Group drawGroup = new Group("Drawings");
-            DrawQPosition = drawGroup.AddItem(new Switch() { IsOn = true, Title = "Draw Q Position" });
-            DrawQPosMode = drawGroup.AddItem(new ModeDisplay() { ModeNames = new List<string>() { "Range", "Name", "Mixed" }, Title = "Q Draw Mode", SelectedModeName = "Mixed" });
-            DrawWRadius = drawGroup.AddItem(new Switch() { IsOn = true, Title = "Draw W Radius" });
-            DrawRRadius = drawGroup.AddItem(new Switch() { IsOn = true, Title = "Draw R Radius" });
-            OnlyDrawWhenNotOnMe = drawGroup.AddItem(new Switch() { IsOn = true, Title = "Only draw when Ball not on self" });
-            DrawCurrentCombo = drawGroup.AddItem(new Switch() { IsOn = true, Title = "Draw Current Combo" });
-            DrawComboDamage = drawGroup.AddItem(new Switch() { IsOn = true, Title = "Draw Combo Damage" });
-            Group ComboGroup = new Group("Combos");
-            GeneralComboIndex = ComboGroup.AddItem(new Switch() { IsOn = true, Title = "Gerneral Combo" });
-            TradeComboIndex = ComboGroup.AddItem(new Switch() { IsOn = true, Title = "Trade Combo" });
-            TradeWithEComboIndex = ComboGroup.AddItem(new Switch() { IsOn = true, Title = "Trade+E Combo" });
-            GroupCombosIndex = OriannaTab.AddGroup(ComboGroup);
-            AbilityGroupIndex = OriannaTab.AddGroup(AbilityGroup);
-            DrawGroupIndex = OriannaTab.AddGroup(drawGroup);
+            return Prediction.MenuSelected.GetPrediction(
+                Prediction.MenuSelected.PredictionType.Line,
+                target,
+                QRange,
+                QWidth,
+                0,
+                QSpeed,
+                QPosition(),
+                true);
         }
 
-        internal static bool isOn(int groupIndex, int switchIndex)
+        internal void TryCastQ(GameObjectBase target)
         {
-            return MenuManager.GetTab(Champions.Orianna.TabIndex).GetGroup(groupIndex).GetItem<Switch>(switchIndex).IsOn;
+            if (target == null) return;
+            if (CanCastQ() && target.IsValidTarget())
+            {
+                Prediction.MenuSelected.PredictionOutput pred = PredictQ(target);
+                if (pred.HitChance >= QHitChance.SelectedModeName.GetHitchanceFromName())
+                {
+                    if (!pred.CollisionObjects.Any(x => !x.IsObject(Oasys.Common.Enums.GameEnums.ObjectTypeFlag.AIMinionClient) && !!x.IsObject(Oasys.Common.Enums.GameEnums.ObjectTypeFlag.AIHeroClient)))
+                    {
+                        SpellCastProvider.CastSpell(CastSlot.Q, pred.CastPosition);
+                    }
+                }
+            }
         }
 
-        internal static string GetMode(int groupIndex, int displayIndex)
+        internal GameObjectBase? GetWTarget()
         {
-            return MenuManager.GetTab(Champions.Orianna.TabIndex).GetGroup(groupIndex).GetItem<ModeDisplay>(displayIndex).SelectedModeName;
+            foreach (GameObjectBase target in UnitManager.EnemyChampions)
+            {
+                Logger.Log($"{target.DistanceTo(QPosition()) < WRadius} - {target.ModelName}");
+                if (target.DistanceTo(QPosition()) < WRadius && target.IsAlive)
+                    return target;
+            }
+            return null;
+        }
+        internal void TryCastW()
+        {
+            GameObjectBase? target = GetWTarget();
+            if (target == null) return;
+            if (CanCastW() && target.IsValidTarget())
+            {
+                SpellCastProvider.CastSpell(CastSlot.W, 0);
+            }
+        } 
+
+        internal GameObjectBase? GetETarget()
+        {
+            foreach (GameObjectBase target in UnitManager.EnemyChampions)
+            {
+                if (!target.IsAlive)
+                    continue;
+                foreach (GameObjectBase ally in UnitManager.AllyChampions)
+                {
+                    Vector2 in1 = Vector2.Zero;
+                    Vector2 in2 = Vector2.Zero;
+                    int intersections = Oasys.Common.Logic.Geometry.LineCircleIntersection(target.Position.ToW2S().X, target.Position.ToW2S().Y, target.UnitComponentInfo.UnitBoundingRadius, QPosition().ToW2S(), ally.Position.ToW2S(), out in1, out in2);
+                    bool isLineCollision = (intersections >= 1);
+                    if (isLineCollision)
+                    {
+                        return ally;
+                    }
+                }
+            }
+            return null;
         }
 
-        internal static bool IsMode(int groupIndex, int displayIndex, string mode)
+        internal GameObjectBase? GetEShieldTarget()
         {
-            return GetMode(groupIndex, displayIndex) == mode;
+            int currentPrio = 0;
+            GameObjectBase? target = null;
+            foreach (GameObjectBase ally in UnitManager.AllyChampions)
+            {
+                if (ally.HealthPercent > EShieldHP.Value)
+                    continue;
+                if (target == null)
+                    target = ally;
+                if (target.HealthPercent > ally.HealthPercent)
+                    target = ally;
+            }
+            return target;
         }
 
-        private void OnCoreRender()
+        internal void TryCastE()
         {
-            if (!MenuManager.GetTab(TabIndex).GetItem<Switch>(EnabledIndex).IsOn)
+            if (!CanCastE())
                 return;
-            bool draw = true;
-            if (isOn(DrawGroupIndex, OnlyDrawWhenNotOnMe))
+            GameObjectBase? eTarget = GetEShieldTarget();
+            if (eTarget == null)
             {
-                draw = IsBallOnMe() == false;
-            }
-            if (isOn(DrawGroupIndex, DrawQPosition) && draw)
-            {
-                if (QPosition().IsOnScreen())
+                GameObjectBase? target = GetETarget();
+                if (target != null)
                 {
-                    if (IsMode(DrawGroupIndex, DrawQPosMode, "Name"))
-                    {
-                        RenderFactory.DrawText("The Ball", QPosition().ToW2S(), new Color(Color.Black.ToColor3(), 0.8F), true);
-                    }
-                    else if (IsMode(DrawGroupIndex, DrawQPosMode, "Range"))
-                    {
-                        RenderFactory.DrawNativeCircle(QPosition(), 60, new Color(Color.Black.ToColor3(), 0.8F), 1);
-                    }
-                    else
-                    {
-                        RenderFactory.DrawText("The Ball", QPosition().ToW2S(), new Color(Color.Black.ToColor3(), 0.8F), true);
-                        RenderFactory.DrawNativeCircle(QPosition(), 60, new Color(Color.Black.ToColor3(), 0.8F), 1);
-                    }
+                    eTarget = target;
                 }
+                if (target == null || !target.IsValidTarget())
+                    return;
             }
-            if (isOn(DrawGroupIndex, DrawWRadius) && draw && Champions.Orianna.W.SpellsReady())
-            {
-                RenderFactory.DrawNativeCircle(QPosition(), WRadius, new Color(Color.OrangeRed.ToColor3(), 0.8F), 1, false);
-            }
-            if (isOn(DrawGroupIndex, DrawRRadius) && draw && Champions.Orianna.R.SpellsReady())
-            {
-                RenderFactory.DrawNativeCircle(QPosition(), RRadius, new Color(Color.DodgerBlue.ToColor3(), 0.8F), 1, false);
-            }
+            SpellCastProvider.CastSpell(CastSlot.E, eTarget.Position, 0);
+        }
 
-            if (isOn(DrawGroupIndex, DrawCurrentCombo))
+        internal GameObjectBase? GetRTarget()
+        {
+            GameObjectBase? currentTarget = null;
+            foreach (GameObjectBase target in UnitManager.EnemyChampions)
             {
-                if (currentCombo != null && Env.Me().Position.IsOnScreen())
+                if (target.DistanceTo(QPosition()) < RRadius && target.IsAlive)
                 {
-                    Vector3 pos = Env.Me().Position;
-                    pos.Y += 30;
-                    RenderFactory.DrawText($"Combo: {currentCombo.Name}", pos.ToW2S(), Color.Black, true);
+                    if (currentTarget == null || (currentTarget.Health - RCalc.CalculateDamage(currentTarget)) > (target.Health - RCalc.CalculateDamage(target)))
+                        currentTarget = target;
                 }
             }
-            if (isOn(DrawGroupIndex, DrawComboDamage)) {
-                if (currentTarget != null && currentCombo != null)
-                {
-                    RenderFactory.DrawHPBarDamage(currentTarget, DamageCalculator.CalculateActualDamage(Env.Me(), currentTarget, 0, currentCombo.GetFullDamageRaw(), 0));
-                }
+            return currentTarget;
+        }
+
+        internal void TryCastR()
+        {
+            GameObjectBase? target = GetRTarget();
+            if (target == null) return;
+            if (CanCastR() && target.IsValidTarget())
+            {
+                if ((target.Health - RCalc.CalculateDamage(target)) < 0 && RUseOnKill.IsOn)
+                    SpellCastProvider.CastSpell(CastSlot.R, 0);
+                if (EnemiesInRange(RRadius, QPosition()) >= REnemies.Value)
+                    SpellCastProvider.CastSpell(CastSlot.R, 0);
             }
         }
 
-        internal static void ListBuffs()
-        {
-            foreach (BuffEntry buff in Env.Me().BuffManager.ActiveBuffs)
-            {
-                Logger.Log($"Buff name: {buff.Name}");
-                Logger.Log($"Buff stacks: {buff.Stacks}");
-                Logger.Log($"Buff isActive: {buff.IsActive}");
-                Logger.Log($"Buff count: {buff.BuffCountInt}");
-                Logger.Log($"Buff alt: {buff.BuffCountAlt}");
-            }
-        }
+        #endregion
 
-        internal static void ListBallEntities()
+        private Task MainInput()
         {
-            foreach (GameObjectBase ball in UnitManager.AllNativeObjects.Where(x => x.Name.Contains("Ball") && x.IsAlive && x.Health >= 1))
+            if (QEnabled.IsOn)
             {
-                Logger.Log($"Name: {ball.Name}");
-                Logger.Log($"IsAlive: {ball.IsAlive}");
-                Logger.Log($"Health: {ball.Health}");
+                GameObjectBase target = Oasys.Common.Logic.TargetSelector.GetBestHeroTarget(null, x => x.Distance < QRange);
+                TryCastQ(target);
             }
+            if (WEnabled.IsOn)
+            {
+                TryCastW();
+            }
+            if (EEnabled.IsOn)
+            {
+                TryCastE();
+            }
+            if (REnabled.IsOn)
+                TryCastR();
+            return Task.CompletedTask;
         }
 
         private Task OnCoreMainTick()
@@ -272,38 +485,24 @@ namespace SyncWave.Champions
             if (Ball == null || !Ball.IsAlive || Ball.Health < 1 || !IsBallOnMe())
             {
                 Ball = UnitManager.AllNativeObjects.FirstOrDefault(x => x.Name == "TheDoomBall" && x.IsAlive && x.Health >= 1);
-            } 
-            return Task.CompletedTask;
-        }
-
-        internal Task OnCoreMainInput()
-        {
-            //Logger.Log("MainInput");
-            try
-            {
-                if (MenuManager.GetTab(TabIndex).GetItem<Switch>(EnabledIndex).IsOn)
-                {
-                    Combo combo = new Common.Helper.Selectors.Orianna.ComboSelector().Select();
-                    if (combo.EnoughMana())
-                    {
-                        currentCombo = combo;
-                        combo.Run();
-                    }
-                    else
-                    {
-                        currentCombo = null;
-                    }
-                } else if (currentCombo != null)
-                {
-                    currentCombo = null;
-                }
             }
-            catch (Exception ex)
-            {
-                Logger.Log($"Exception occured at MainInput. {ex.Message}");
-            }
+            _QDamage.IsOn = DrawQ.IsOn && Env.QLevel >= 1;
+            _QDamage.UpdateName((DrawQMode.SelectedModeName == "AboveHPBar") ? "Q" : String.Empty);
+            _QDamage.UpdateColor(ColorConverter.GetColor(DrawQColor.SelectedModeName));
+            _QDamage.UpdatePriority((uint)DrawQPrio.Value);
+            _WDamage.IsOn = DrawW.IsOn && Env.WLevel >= 1;
+            _WDamage.UpdateName((DrawWMode.SelectedModeName == "AboveHPBar") ? "W" : String.Empty);
+            _WDamage.UpdateColor(ColorConverter.GetColor(DrawWColor.SelectedModeName));
+            _WDamage.UpdatePriority((uint)DrawWPrio.Value);
+            _EDamage.IsOn = DrawE.IsOn && Env.ELevel >= 1;
+            _EDamage.UpdateName((DrawEMode.SelectedModeName == "AboveHPBar") ? "E" : String.Empty);
+            _EDamage.UpdateColor(ColorConverter.GetColor(DrawEColor.SelectedModeName));
+            _EDamage.UpdatePriority((uint)DrawEPrio.Value);
+            _RDamage.IsOn = DrawR.IsOn && Env.RLevel >= 1;
+            _RDamage.UpdateName((DrawRMode.SelectedModeName == "AboveHPBar") ? "R" : String.Empty);
+            _RDamage.UpdateColor(ColorConverter.GetColor(DrawRColor.SelectedModeName));
+            _RDamage.UpdatePriority((uint)DrawRPrio.Value);
             return Task.CompletedTask;
-
         }
     }
 }

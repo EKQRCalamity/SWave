@@ -51,6 +51,8 @@ namespace SyncWave.Champions
         internal static WCast W = new WCast();
         internal static ECast E = new ECast();
 
+        internal static int QRange = 1200;
+
         internal static int[] QManaCost = new int[] { 0, 40, 40, 40, 40, 40 };
         internal static int[] WManaCost = new int[] { 0, 70, 70, 70, 70, 70 };
         internal static int[] EManaCost = new int[] { 0, 50, 60, 70, 80, 90 };

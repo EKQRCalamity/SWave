@@ -164,7 +164,7 @@ namespace SyncWave.Champions
 
         internal static Group WGroup = new Group("W Settings");
         internal static Switch WEnabled = new Switch("Enabled", true);
-        internal static ModeDisplay WHitChance = new ModeDisplay() { Title = "Q Hitchance", ModeNames = new() { "Impossible", "Unknown", "OutOfRange", "Dashing", "Low", "Medium", "High", "VeryHigh", "Immobile" }, SelectedModeName = "VeryHigh" };
+        internal static ModeDisplay WHitChance = new ModeDisplay() { Title = "W Hitchance", ModeNames = new() { "Impossible", "Unknown", "OutOfRange", "Dashing", "Low", "Medium", "High", "VeryHigh", "Immobile" }, SelectedModeName = "VeryHigh" };
         internal static Switch WDraw = new Switch("Draw W Damage", true);
         internal static Switch WDrawDepends = new Switch("Draw only when in range", false);
         internal static ModeDisplay WModes = new ModeDisplay() { Title = "Drawing Mode", ModeNames = new() { "AboveHPBar", "AboveHPBarNoName" }, SelectedModeName = "AboveHPBar" };
@@ -173,7 +173,7 @@ namespace SyncWave.Champions
 
         internal static Group RGroup = new Group("R Settings");
         internal static Switch REnabled = new Switch("Enabled", true);
-        internal static ModeDisplay RHitChance = new ModeDisplay() { Title = "Q Hitchance", ModeNames = new() { "Impossible", "Unknown", "OutOfRange", "Dashing", "Low", "Medium", "High", "VeryHigh", "Immobile" }, SelectedModeName = "VeryHigh" };
+        internal static ModeDisplay RHitChance = new ModeDisplay() { Title = "R Hitchance", ModeNames = new() { "Impossible", "Unknown", "OutOfRange", "Dashing", "Low", "Medium", "High", "VeryHigh", "Immobile" }, SelectedModeName = "VeryHigh" };
         internal static Switch RDraw = new Switch("Draw R Damage", true);
         internal static ModeDisplay RModes = new ModeDisplay() { Title = "Drawing Mode", ModeNames = new() { "AboveHPBar", "AboveHPBarNoName" }, SelectedModeName = "AboveHPBar" };
         internal static Counter RPrio = new Counter("Draw Prio", 4, 1, 10);

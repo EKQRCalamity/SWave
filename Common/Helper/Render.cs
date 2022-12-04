@@ -24,6 +24,7 @@ namespace SyncWave.Common.Helper
         internal Color Color { get; private set; }
         internal bool IsOn { get; set; }
         internal uint Priority { get; private set; }
+        internal bool ShowOnHUD { get; set; } 
 
         internal DamageCalculation Calculator { get; }
 
@@ -50,12 +51,13 @@ namespace SyncWave.Common.Helper
             return;
         }
 
-        public Damage(string name, uint priority, DamageCalculation calculator, Color color)
+        public Damage(string name, uint priority, DamageCalculation calculator, Color color, bool showOnHUD = false)
         {
             this.Name = name;
             this.Priority = priority;
             this.Calculator = calculator;
             this.Color = color;
+            this.ShowOnHUD = showOnHUD;
         }
     }
 

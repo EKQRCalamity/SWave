@@ -21,10 +21,10 @@ namespace SyncWave.Combos.Twitch
     internal class General : Base.Combo
     {
         internal override string Name => "General";
-        internal override int MinMana => Champions.Orianna.QManaCost[Env.QLevel];
+        internal override int MinMana => Champions.Twitch.QManaCost[Env.QLevel];
 
         internal override Common.Helper.Selectors.TargetSelector TargetSelector => new Common.Helper.Selectors.TargetSelector(MinRange);
-        internal override int MinRange => Champions.Orianna.QRange;
+        internal override int MinRange => Champions.Twitch.QRange;
 
         internal override float Damage => GetFullDamageRaw();
 
@@ -33,7 +33,7 @@ namespace SyncWave.Combos.Twitch
             float Damage = 0;
             if (Env.Spells.GetSpellClass(SpellSlot.E).IsSpellReady)
             {
-                Damage += Champions.Orianna.EDamage[Env.ELevel] + (Env.Me().UnitStats.TotalAbilityPower * Champions.Orianna.EDamageScaling);
+                Damage += Champions.Twitch.EDamage[Env.ELevel] + (Env.Me().UnitStats.TotalAbilityPower * Champions.Twitch.EDamageScaling);
             }
             return Damage;
         }

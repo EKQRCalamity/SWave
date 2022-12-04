@@ -7,6 +7,7 @@ using Oasys.Common.Menu.ItemComponents;
 using Oasys.SDK.Tools;
 using System.Threading.Tasks;
 using SyncWave.Misc;
+using SyncWave.Common.Helper;
 
 namespace SyncWave
 {
@@ -30,17 +31,26 @@ namespace SyncWave
                 Logger.Log(champion.GetType() + " loaded!");
                 Logger.Log("Setting up TargetSelector Menu...");
                 SyncWave.Common.Helper.Selectors.TargetSelector.MenuInit();
-                Logger.Log($"Target Selector should be set up!");
-                Logger.Log($"{Env.Me().ModelName}");
+                //Logger.Log($"Target Selector should be set up!");
+                if (Env.ModuleVersion == V.InTesting)
+                    Logger.Log($"{Env.Me().ModelName}");
                 champion.Init();
             }
+            Logger.Log("Setting up Pings");
+            PingMenu.Init();
+            TargetPing.Init();
+            WardPing.Init();
             Logger.Log($"Setting up Misc");
-            if (Env.ModuleVersion == V.InTesting)
-                TestDamage.Init();
             new AutoUser().Init();
             new MinionMarker().Init();
             new MoreDrawings().Init();
             new PerfectSmite().Init();
+            RangeDrawer.Init();
+            if (Env.ModuleVersion == V.InTesting)
+            {
+                TestDamage.Init();
+                //PingTest.Init();
+            }
             return Task.CompletedTask;
         }
 
