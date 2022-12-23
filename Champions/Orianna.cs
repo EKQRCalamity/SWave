@@ -108,7 +108,7 @@ namespace SyncWave.Champions
         }
     }
 
-    internal class Orianna : Champion
+    internal class Orianna : Module
     {
         #region Logic
 
@@ -180,6 +180,8 @@ namespace SyncWave.Champions
         {
             return EnemiesInRange(range, originPos) >= n;
         }
+
+        Common.SpellAim.AimSpell? Q;
 
         #endregion
 
@@ -322,6 +324,15 @@ namespace SyncWave.Champions
             Render.AddDamage(_RDamage);
             RangeDrawer.WDisabled = true;
             RangeDrawer.RDisabled = true;
+            Q = new(QRange, OriannaTab, CastSlot.Q, Oasys.Common.Enums.GameEnums.SpellSlot.Q);
+            Q.SetPrediction(
+                Prediction.MenuSelected.PredictionType.Line,
+                QRange,
+                QWidth,
+                0,
+                QSpeed,
+                true,
+                QPosition());
             Logger.Log("Orianna Initialized.");
 
         }
@@ -418,7 +429,7 @@ namespace SyncWave.Champions
             if (!CanCastE())
                 return;
             GameObjectBase? eTarget = GetEShieldTarget();
-            if (eTarget == null)
+            if (eTarget == null && eTarget.IsAlive)
             {
                 GameObjectBase? target = GetETarget();
                 if (target != null)
@@ -486,6 +497,15 @@ namespace SyncWave.Champions
             {
                 Ball = UnitManager.AllNativeObjects.FirstOrDefault(x => x.Name == "TheDoomBall" && x.IsAlive && x.Health >= 1);
             }
+
+            Q.SetPrediction(
+                Prediction.MenuSelected.PredictionType.Line,
+                QRange,
+                QWidth,
+                0,
+                QSpeed,
+                true,
+                QPosition());
             _QDamage.IsOn = DrawQ.IsOn && Env.QLevel >= 1;
             _QDamage.UpdateName((DrawQMode.SelectedModeName == "AboveHPBar") ? "Q" : String.Empty);
             _QDamage.UpdateColor(ColorConverter.GetColor(DrawQColor.SelectedModeName));

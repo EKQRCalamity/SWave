@@ -15,10 +15,20 @@ namespace SyncWave.Misc
     internal static class RangeDrawer
     {
 
-        internal static float QRange => Env.Spells.GetSpellClass(Oasys.Common.Enums.GameEnums.SpellSlot.Q).SpellData.CastRange;
-        internal static float WRange => Env.Spells.GetSpellClass(Oasys.Common.Enums.GameEnums.SpellSlot.W).SpellData.CastRange;
-        internal static float ERange => Env.Spells.GetSpellClass(Oasys.Common.Enums.GameEnums.SpellSlot.E).SpellData.CastRange;
-        internal static float RRange => Env.Spells.GetSpellClass(Oasys.Common.Enums.GameEnums.SpellSlot.R).SpellData.CastRange;
+        internal static float QCastRange => Env.Spells.GetSpellClass(Oasys.Common.Enums.GameEnums.SpellSlot.Q).SpellData.CastRange;
+        internal static float WCastRange => Env.Spells.GetSpellClass(Oasys.Common.Enums.GameEnums.SpellSlot.W).SpellData.CastRange;
+        internal static float ECastRange => Env.Spells.GetSpellClass(Oasys.Common.Enums.GameEnums.SpellSlot.E).SpellData.CastRange;
+        internal static float RCastRange => Env.Spells.GetSpellClass(Oasys.Common.Enums.GameEnums.SpellSlot.R).SpellData.CastRange;
+
+        internal static float QSpellRange => Env.Spells.GetSpellClass(Oasys.Common.Enums.GameEnums.SpellSlot.Q).SpellData.SpellRange;
+        internal static float WSpellRange => Env.Spells.GetSpellClass(Oasys.Common.Enums.GameEnums.SpellSlot.W).SpellData.SpellRange;
+        internal static float ESpellRange => Env.Spells.GetSpellClass(Oasys.Common.Enums.GameEnums.SpellSlot.E).SpellData.SpellRange;
+        internal static float RSpellRange => Env.Spells.GetSpellClass(Oasys.Common.Enums.GameEnums.SpellSlot.R).SpellData.SpellRange;
+
+        internal static float QRange => (QCastRange >= QSpellRange) ? QCastRange : QSpellRange;
+        internal static float WRange => (WCastRange >= WSpellRange) ? WCastRange : WSpellRange;
+        internal static float ERange => (ECastRange >= ESpellRange) ? ECastRange : ESpellRange;
+        internal static float RRange => (RCastRange >= RSpellRange)? RCastRange : RSpellRange;
 
         internal static Group DrawerGroup = new Group("Range Drawer");
         internal static Switch ShowQRange = new Switch("Show Q Range", true);

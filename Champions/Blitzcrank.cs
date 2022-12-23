@@ -4,18 +4,22 @@ using Oasys.Common.Extensions;
 using Oasys.Common.GameObject;
 using Oasys.Common.Menu;
 using Oasys.Common.Menu.ItemComponents;
+using Oasys.Common.Tools.Devices;
 using Oasys.SDK;
+using Oasys.SDK.InputProviders;
 using Oasys.SDK.SpellCasting;
 using Oasys.SDK.Tools;
 using SharpDX;
 using SyncWave.Base;
 using SyncWave.Common.Extensions;
 using SyncWave.Common.Helper;
+using SyncWave.Common.SpellAim;
 using SyncWave.Misc;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
@@ -72,7 +76,7 @@ namespace SyncWave.Champions
             return damage;
         }
     }
-    internal class Blitzcrank : Base.Champion
+    internal class Blitzcrank : Base.Module
     {
 
         internal static bool CanCastQ() => Env.QReady && QEnabled.IsOn && Env.Me().enoughMana(QManaCost) && Env.Me().IsAlive;
@@ -100,6 +104,9 @@ namespace SyncWave.Champions
         internal static float RCastTime = 0.25F;
 
         internal static Tab BlitzTab = new Tab("SyncWave - Blitzcrank");
+        internal static Switch SpellAimQ = new("Q Enabled", true);
+        internal static ModeDisplay SpellAimTarget = new() { Title = "Target Select", ModeNames = new() { "CloseToMouse", "TargetSelector" }, SelectedModeName = "CloseToMouse" };
+
         internal static Group QGroup = new Group("Q Settings");
         internal static Switch QEnabled = new("Enabled", true);
         internal static ModeDisplay QHitChance = new ModeDisplay() { Title = "Q Hitchance", ModeNames = new() { "Impossible", "Unknown", "OutOfRange", "Dashing", "Low", "Medium", "High", "VeryHigh", "Immobile" }, SelectedModeName = "VeryHigh" };
@@ -127,6 +134,7 @@ namespace SyncWave.Champions
         internal static void InitMenu()
         {
             MenuManagerProvider.AddTab(BlitzTab);
+
             BlitzTab.AddGroup(QGroup);
             QGroup.AddItem(QEnabled);
             QGroup.AddItem(QHitChance);
@@ -169,6 +177,8 @@ namespace SyncWave.Champions
             RangeDrawer.WDisabled = true;
             RangeDrawer.EDisabled = true;
             Logger.Log("Blitz Initialized!");
+            AimSpell q = new AimSpell(QRange + 20, BlitzTab, CastSlot.Q, Oasys.Common.Enums.GameEnums.SpellSlot.Q);
+            q.SetPrediction(Oasys.SDK.Prediction.MenuSelected.PredictionType.Line, QRange, QWidth, QCastTime, QSpeed, true);
         }
 
         private void ECast(float gameTime, GameObjectBase target)
@@ -200,7 +210,7 @@ namespace SyncWave.Champions
             GameObjectBase target = Oasys.Common.Logic.TargetSelector.GetBestHeroTarget(null, x => x.Distance < QRange);
             if (target != null)
             {
-                Prediction.MenuSelected.PredictionOutput pred = Prediction.MenuSelected.GetPrediction(Prediction.MenuSelected.PredictionType.Line, target, QRange, QWidth, QCastTime, QSpeed);
+                Oasys.SDK.Prediction.MenuSelected.PredictionOutput pred = Oasys.SDK.Prediction.MenuSelected.GetPrediction(Oasys.SDK.Prediction.MenuSelected.PredictionType.Line, target, QRange, QWidth, QCastTime, QSpeed);
                 if (pred.HitChance >= QHitChance.SelectedModeName.GetHitchanceFromName())
                 {
                     if (!pred.CollisionObjects.Any(x => !x.IsObject(Oasys.Common.Enums.GameEnums.ObjectTypeFlag.AIHeroClient)))

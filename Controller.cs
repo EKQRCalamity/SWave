@@ -27,7 +27,7 @@ namespace SyncWave
             Logger.Log($"{Env.Me().ModelName}");
             if (Env.SupportedChamps.Contains(Env.Me().ModelName))
             {
-                Base.Champion champion = Base.Champion.GetFromName(Env.Me().ModelName);
+                Base.Module champion = Base.Module.GetFromName(Env.Me().ModelName);
                 Logger.Log(champion.GetType() + " loaded!");
                 Logger.Log("Setting up TargetSelector Menu...");
                 SyncWave.Common.Helper.Selectors.TargetSelector.MenuInit();
@@ -40,6 +40,7 @@ namespace SyncWave
             PingMenu.Init();
             TargetPing.Init();
             WardPing.Init();
+            //SpellBuffer.Init();
             Logger.Log($"Setting up Misc");
             new AutoUser().Init();
             new MinionMarker().Init();

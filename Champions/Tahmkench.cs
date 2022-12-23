@@ -23,7 +23,7 @@ using System.Windows.Forms;
 
 namespace SyncWave.Champions
 {
-    internal class Tahmkench : SyncWave.Base.Champion
+    internal class Tahmkench : SyncWave.Base.Module
     {
         internal List<Combo> Combos => new()
         {

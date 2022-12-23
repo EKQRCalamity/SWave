@@ -12,6 +12,7 @@ using SyncWave.Base;
 using SyncWave.Common.Extensions;
 using SyncWave.Common.Helper;
 using SyncWave.Common.Helper.Selectors;
+using SyncWave.Common;
 using System;
 using System.Collections.Generic;
 using System.Configuration;
@@ -107,7 +108,7 @@ namespace SyncWave.Champions
 
     #endregion
 
-    internal class Graves : SyncWave.Base.Champion
+    internal class Graves : SyncWave.Base.Module
     {
         #region Stats/Statics
         internal static GravesQDamageCalc QCalc = new GravesQDamageCalc();
@@ -148,6 +149,13 @@ namespace SyncWave.Champions
             _WDamage = new Damage("W", (uint)WPrio.Value, WCalc, ColorConverter.GetColor(WColor.SelectedModeName));
             _RDamage = new Damage("R", (uint)RPrio.Value, RCalc, ColorConverter.GetColor(RColor.SelectedModeName));
             Logger.Log("Graves Initialized!");
+            SyncWave.Common.SpellAim.AimSpell q = new Common.SpellAim.AimSpell(QRange, GravesTab, CastSlot.Q, Oasys.Common.Enums.GameEnums.SpellSlot.Q);
+            q.SetPrediction(Prediction.MenuSelected.PredictionType.Line, QRange, QShellWidth, QCastTime, QSpeed, true);
+            Common.SpellAim.AimSpell w = new(WRange - 10, GravesTab, CastSlot.W, Oasys.Common.Enums.GameEnums.SpellSlot.W);
+            w.SetPrediction(Prediction.MenuSelected.PredictionType.Circle, WRange, WRadius, WCastTime, WSpeed, true);
+            Common.SpellAim.AimSpell r = new(RRange1 - 40, GravesTab, CastSlot.R, Oasys.Common.Enums.GameEnums.SpellSlot.R);
+            r.SetPrediction(Prediction.MenuSelected.PredictionType.Line, RRange1, RShellWidth, RCastTime, RSpeed, true);
+
         }
 
         #region Menu

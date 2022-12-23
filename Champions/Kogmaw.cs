@@ -3,6 +3,7 @@ using Oasys.Common.GameObject;
 using Oasys.Common.GameObject.Clients;
 using Oasys.Common.Menu;
 using Oasys.Common.Menu.ItemComponents;
+using Oasys.SDK;
 using Oasys.SDK.Events;
 using Oasys.SDK.Menu;
 using Oasys.SDK.Rendering;
@@ -17,7 +18,7 @@ using System.Threading.Tasks;
 
 namespace SyncWave.Champions
 {
-    internal class Kogmaw : SyncWave.Base.Champion
+    internal class Kogmaw : SyncWave.Base.Module
     {
         internal List<Combo> Combos => new()
         {
@@ -98,7 +99,7 @@ namespace SyncWave.Champions
             CoreEvents.OnCoreMainInputAsync += OnCoreMainInput;
             CoreEvents.OnCoreRender += OnCoreRender;
         }
-
+        Common.SpellAim.AimSpell? RAim;
         internal void InitMenu()
         {
             Tab KogmawTab = new Tab("SyncWave - Kog'Maw");
@@ -125,6 +126,12 @@ namespace SyncWave.Champions
             CurrentComboIndex = DrawGroup.AddItem(new Switch() { IsOn = true, Title = "Draw Current Combo" });
             DamageIndex = DrawGroup.AddItem(new Switch() { IsOn = true, Title = "Draw Damage" });
             DrawDamageModeIndex = DrawGroup.AddItem(new ModeDisplay() { Title = "Damage Draw Mode", ModeNames = new() { "Combo", "R", "Mixed" }, SelectedModeName = "Mixed" });
+            Common.SpellAim.AimSpell Q = new(QRange, KogmawTab, Oasys.SDK.SpellCasting.CastSlot.Q, Oasys.Common.Enums.GameEnums.SpellSlot.Q);
+            Q.SetPrediction(Prediction.MenuSelected.PredictionType.Line, Champions.Kogmaw.QRange, Champions.Kogmaw.QWidth, Champions.Kogmaw.QCastTime, Champions.Kogmaw.QSpeed, true);
+            Common.SpellAim.AimSpell E = new(ERange, KogmawTab, Oasys.SDK.SpellCasting.CastSlot.E, Oasys.Common.Enums.GameEnums.SpellSlot.E);
+            E.SetPrediction(Prediction.MenuSelected.PredictionType.Line, Champions.Kogmaw.ERange, Champions.Kogmaw.EWidth, Champions.Kogmaw.ECastTime, Champions.Kogmaw.ESpeed, false);
+            RAim = new(RRange[Env.RLevel], KogmawTab, Oasys.SDK.SpellCasting.CastSlot.R, Oasys.Common.Enums.GameEnums.SpellSlot.R);
+            RAim.SetPrediction(Prediction.MenuSelected.PredictionType.Circle, RRange[Env.RLevel], Champions.Kogmaw.RRadius, Champions.Kogmaw.RCastTime + 0.6F, 1500, false);
         }
 
         internal static bool isOn(int groupIndex, int switchIndex)
@@ -144,6 +151,7 @@ namespace SyncWave.Champions
 
         private void OnCoreRender()
         {
+            RAim.SetPrediction(Prediction.MenuSelected.PredictionType.Circle, RRange[Env.RLevel], Champions.Kogmaw.RRadius, Champions.Kogmaw.RCastTime + 0.6F, 1500, false);
             if (isOn(DrawGroupIndex, WRangeIndex))
             {
                 if (isOn(DrawGroupIndex, WRangeOnlyWhenReadyIndex) && Champions.Kogmaw.W.SpellsReady())

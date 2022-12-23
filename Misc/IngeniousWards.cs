@@ -1,4 +1,7 @@
-﻿using SharpDX;
+﻿using Oasys.Common.GameObject;
+using Oasys.Common.Menu;
+using Oasys.Common.Menu.ItemComponents;
+using SharpDX;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -19,11 +22,34 @@ namespace SyncWave.Misc
             this.ClickPosition = clickPos;
             this.WardPosition = wardPos;
         }
+        
+        public bool IsOnWard(GameObjectBase target)
+        {
+            if (WardIsOn(target) != null)
+            {
+                return true;
+            }
+            return false;
+        }
+
+        public bool MeOnWard => IsOnWard(Env.Me());
+        public Ward? WardIsOn(GameObjectBase target)
+        {
+            foreach (Ward ward in IngeniousWards.SummonersRiftLoc)
+            {
+                if (target.DistanceTo(ward.MovePosition) <= 25)
+                {
+                    return ward;
+                }
+            }
+            return null;
+        }
+        public Ward? WardIAmOn => WardIsOn(Env.Me());
     }
 
-    internal class IngeniousWards
+    internal static class IngeniousWards
     {
-        internal List<Ward> SummonersRiftLoc = new List<Ward>()
+        internal static List<Ward> SummonersRiftLoc = new List<Ward>()
         {
             new Ward(
                 new Vector3(1774F, 52.84F, 10856F),
@@ -46,5 +72,20 @@ namespace SyncWave.Misc
                 new Vector3(10322.94F, 49.03F, 3244.38F)
                 )
         };
+
+
+
+        internal static void Init()
+        {
+            MenuInit();
+        }
+
+        internal static Group group = new Group("Ward Helper");
+        internal static Switch Enabeled = new Switch("Enabled", true);
+
+        private static void MenuInit()
+        {
+            throw new NotImplementedException();
+        }
     }
 }

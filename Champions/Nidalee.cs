@@ -176,7 +176,7 @@ namespace SyncWave.Champions
         }
     }
 
-    internal class Nidalee : Base.Champion
+    internal class Nidalee : Base.Module
     {
         internal static int MainTick = 0;
 
@@ -218,11 +218,21 @@ namespace SyncWave.Champions
                 Logger.Log(target.BuffManager.HasActiveBuff("nidaleepassivehunted"));
             return target.BuffManager.HasActiveBuff("nidaleepassivehunted");
         }
+        Common.SpellAim.AimSpell? CougarQ;
+        Common.SpellAim.AimSpell? JavelinQ;
+        Common.SpellAim.AimSpell? CougarW;
+        Common.SpellAim.AimSpell? CougarE;
 
         internal override void Init()
         {
             Logger.Log("Initializing Nidalee..");
             InitMenu();
+            CougarQ = new((int)Env.Me().TrueAttackRange, NidTab, CastSlot.Q, SpellSlot.Q);
+            JavelinQ = new(JavelinRange, NidTab, CastSlot.Q, SpellSlot.Q);
+            JavelinQ.SetPrediction(Prediction.MenuSelected.PredictionType.Line, JavelinRange, JavelinWidth, JavelinCastTime, JavelinSpeed, true);
+            CougarW = new(StandardWRange, NidTab, CastSlot.W, SpellSlot.W);
+            CougarE = new(ECougarRange, NidTab, CastSlot.E, SpellSlot.E);
+            CougarE.SetPrediction(Prediction.MenuSelected.PredictionType.Cone, ECougarRange, 180, ECastTime, JavelinSpeed, false);
             CoreEvents.OnCoreMainTick += OnCoreMainTick;
             CoreEvents.OnCoreMainInputAsync += OnCoreMainInput;
             Render.Init();
@@ -231,6 +241,7 @@ namespace SyncWave.Champions
             _EDamage = new Damage("E", 4, ECalc, ColorConverter.GetColor(DrawEColor.SelectedModeName));
             CoreEvents.OnCoreRender += OnCoreRender;
             Logger.Log("Nidalee initialized!");
+            
         }
 
         #region Menu
@@ -403,6 +414,11 @@ namespace SyncWave.Champions
         #region Events
         private Task OnCoreMainTick()
         {
+            JavelinQ.IsOn = !IsTransformed();
+            CougarQ.IsOn = IsTransformed();
+            CougarW.IsOn = IsTransformed();
+            CougarE.IsOn = IsTransformed();
+
             MainTick += 1;
             _QDamage.IsOn = SpearDraw.IsOn;
             _WDamage.IsOn = WDraw.IsOn;

@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace SyncWave.Champions
 {
-    internal abstract class None : SyncWave.Base.Champion
+    internal abstract class None : SyncWave.Base.Module
     {
     }
 }

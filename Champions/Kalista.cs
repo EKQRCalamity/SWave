@@ -86,7 +86,7 @@ namespace SyncWave.Champions
     }
     #endregion
 
-    internal class Kalista : SyncWave.Base.Champion
+    internal class Kalista : SyncWave.Base.Module
     {
         #region Statics/Stats
         internal static KalistaQDamageCalc QCalc = new();
@@ -134,6 +134,8 @@ namespace SyncWave.Champions
             _QDamage = new Damage("Q", (uint)DrawQPrio.Value, QCalc, ColorConverter.GetColor(DrawQColor.SelectedModeName));
             _EDamage = new Damage("E", (uint)DrawEPrio.Value, ECalc, ColorConverter.GetColor(DrawEColor.SelectedModeName));
             Logger.Log("Kalista Initialized!");
+            Common.SpellAim.AimSpell Q = new Common.SpellAim.AimSpell(QRange, KalistaTab, CastSlot.Q, SpellSlot.Q);
+            Q.SetPrediction(Prediction.MenuSelected.PredictionType.Line, Champions.Kalista.QRange - 40, Champions.Kalista.QWidth, Champions.Kalista.QCastTime, Champions.Kalista.QSpeed, true);
         }
 
         #region Menu
