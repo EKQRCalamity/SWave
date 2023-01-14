@@ -475,7 +475,7 @@ namespace SyncWave.Champions
         {
             if (QEnabled.IsOn)
             {
-                GameObjectBase target = Oasys.Common.Logic.TargetSelector.GetBestHeroTarget(null, x => x.Distance < QRange);
+                GameObjectBase target = Oasys.Common.Logic.TargetSelector.GetBestHeroTarget(null, x => x.Distance < QRange && x.IsAlive);
                 TryCastQ(target);
             }
             if (WEnabled.IsOn)

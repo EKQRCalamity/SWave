@@ -23,7 +23,9 @@ namespace SyncWave
 
         private static Task Init()
         {
+            PingManager.GetPositionOnPingWheel(PingSlot.Neutral);
             CoreEvents.OnCoreMainTick += TickFunc;
+            
             Logger.Log($"{Env.Me().ModelName}");
             if (Env.SupportedChamps.Contains(Env.Me().ModelName))
             {
@@ -40,6 +42,12 @@ namespace SyncWave
             PingMenu.Init();
             TargetPing.Init();
             WardPing.Init();
+            if (GameEngine.InGameInfo.GameType == Oasys.Common.Enums.GameEnums.GameTypes.Classic || GameEngine.InGameInfo.GameType == Oasys.Common.Enums.GameEnums.GameTypes.PracticeTool)
+            {
+                IngeniousWards
+                    .Init();
+            }
+            OrbwalkFlash.Init();
             //SpellBuffer.Init();
             Logger.Log($"Setting up Misc");
             new AutoUser().Init();

@@ -30,7 +30,7 @@ namespace SyncWave.Champions
             BuffEntry? buff = buffs.FirstOrDefault(x => x.Name == "TwitchDeadlyVenom");
             if (buff == null)
                 return 0;
-            return buff.EndTime - buff.StartTime;
+            return buff.EndTime - GameEngine.GameTime;
         }
 
         internal static float EStacks(GameObjectBase enemy)
@@ -50,7 +50,7 @@ namespace SyncWave.Champions
                 damage = RawDamage + (APScaling * Env.Me().UnitStats.TotalAbilityPower);
             } else
             {
-                damage = (RawDamage + (APScaling * Env.Me().UnitStats.TotalAbilityPower)) * (float)Math.Floor(PassiveDuration(target));
+                damage = (RawDamage + (APScaling * Env.Me().UnitStats.TotalAbilityPower)) * (float)PassiveDuration(target);
             }
             return damage;
         }

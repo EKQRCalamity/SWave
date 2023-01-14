@@ -102,7 +102,7 @@ namespace SyncWave.Misc
 
         internal List<Minion> GetMinions()
         {
-            return UnitManager.EnemyMinions.ToList().Where(x => x.IsAlive && x.Distance <= 2000 && x.W2S.IsValid() && x.IsVisible && x.IsValidTarget()).ToList();
+            return UnitManager.EnemyMinions.deepCopy().ToList().Where(x => x.IsAlive && x.Distance <= 2000 && x.W2S.IsValid() && x.IsVisible && x.IsValidTarget()).ToList();
         }
 
         internal string LastHitColorName => Menu.tab.GetGroup(GroupIndex).GetItem<ModeDisplay>(DrawColorCanLastHit).SelectedModeName;

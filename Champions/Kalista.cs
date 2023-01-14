@@ -136,6 +136,8 @@ namespace SyncWave.Champions
             Logger.Log("Kalista Initialized!");
             Common.SpellAim.AimSpell Q = new Common.SpellAim.AimSpell(QRange, KalistaTab, CastSlot.Q, SpellSlot.Q);
             Q.SetPrediction(Prediction.MenuSelected.PredictionType.Line, Champions.Kalista.QRange - 40, Champions.Kalista.QWidth, Champions.Kalista.QCastTime, Champions.Kalista.QSpeed, true);
+            Render.AddDamage(_QDamage);
+            Render.AddDamage( _EDamage);
         }
 
         #region Menu
@@ -224,7 +226,7 @@ namespace SyncWave.Champions
             foreach (GameObjectBase hero in UnitManager.GetEnemies(flags).deepCopy())
             {
                 float stacks = ECalc.GetEStacks(hero);
-                if (stacks >= 1)
+                if (stacks >= 1 && hero.IsAlive && hero.IsVisible)
                 {
                     enemies.Add(hero);
                 }
@@ -320,7 +322,7 @@ namespace SyncWave.Champions
                 Prediction.MenuSelected.PredictionOutput pred = PredictQ(target);
                 if (pred.HitChance >= GetHitchanceFromName(QHitChance.SelectedModeName))
                 {
-                    if (!pred.Collision || QCalc.QCanTransferToTarget(pred))
+                    if (!pred.Collision || QTransfer.IsOn && QCalc.QCanTransferToTarget(pred))
                     {
                         SpellCastProvider.CastSpell(CastSlot.Q, pred.CastPosition);
                     }
@@ -361,14 +363,18 @@ namespace SyncWave.Champions
             #endregion
             if (Env.ModuleVersion == Common.Enums.V.None)
                 Logger.Log("Updating Damages");
-            if (!DrawE.IsOn)
+            if (!DrawE.IsOn || DrawEMode.SelectedModeName == "OnHPBar")
             {
                 _EDamage.IsOn = false;
             }
-            if (!DrawQ.IsOn)
+            else
+                _EDamage.IsOn = true;
+            if (!DrawQ.IsOn || DrawQMode.SelectedModeName == "OnHPBar")
             {
                 _QDamage.IsOn = false;
             }
+            else
+                _QDamage.IsOn = true;
             _QDamage.UpdateName((DrawQMode.SelectedModeName == "AboveHPBar") ? "Q" : String.Empty);
             _QDamage.UpdateColor(ColorConverter.GetColor(DrawQColor.SelectedModeName));
             _QDamage.UpdatePriority((uint)DrawQPrio.Value);
@@ -382,9 +388,9 @@ namespace SyncWave.Champions
         {
             if (!Enabled.IsOn)
                 return Task.CompletedTask;
-            GameObjectBase target = Oasys.Common.Logic.TargetSelector.GetBestHeroTarget(null, x => x.Distance <= QRange - 40);
+            GameObjectBase target = Oasys.Common.Logic.TargetSelector.GetBestHeroTarget(null, x => x.Distance <= Env.Me().TrueAttackRange);
             bool _origTarget = Oasys.Common.Settings.Orbwalker.HoldTargetChampsOnly;
-            if (target == null && Oasys.SDK.Orbwalker.TargetHero == null && LaneClearWoTarget.IsOn)
+            if (LaneClearWoTarget.IsOn && target == null && Oasys.SDK.Orbwalker.TargetHero == null)
             {
                 SetTargetChampsOnly(false);
                 Oasys.SDK.Orbwalker.SelectedTarget = UnitManager.EnemyMinions.deepCopy().OrderBy(x => x.Distance).FirstOrDefault(x => Oasys.SDK.TargetSelector.IsAttackable(x) && Oasys.SDK.TargetSelector.IsInRange(x));
@@ -405,7 +411,10 @@ namespace SyncWave.Champions
                 SetTargetChampsOnly(_origTarget);
             #region QCast
             if (QEnabled.IsOn)
-                TryCastQ(target);
+            {
+                GameObjectBase target2 = Oasys.Common.Logic.TargetSelector.GetBestHeroTarget(null, x => x.Distance <= QRange-20);
+                TryCastQ(target2);
+            }
             #endregion
             #region ECast
             if (EEnabled.IsOn)
@@ -443,47 +452,22 @@ namespace SyncWave.Champions
                 {
                     if (DrawE.IsOn && Env.ELevel >= 1)
                     {
-                        if (!(DrawEMode.SelectedModeName == "OnHPBar"))
+                        if (DrawEMode.SelectedModeName == "OnHPBar")
                         {
-                            if (Env.ModuleVersion == Common.Enums.V.Preview)
-                                Logger.Log("Should Draw E");
-                            if (!Render.HasDamage(_EDamage))
-                                Render.AddDamage(_EDamage);
-                            if (!_EDamage.IsOn)
-                                _EDamage.IsOn = true;
-
-                            if (target.IsObject(ObjectTypeFlag.AIMinionClient))
-                                RenderFactory.DrawHPBarDamage(target, ECalc.CalculateDamage(target));
-                        }
-                        else
-                        {
-                            if (Render.HasDamage(_EDamage))
-                                _EDamage.IsOn = false;
                             RenderFactory.DrawHPBarDamage(target, ECalc.CalculateDamage(target));
                         }
 
                     }
                 }
-                flags = new ObjectTypeFlag[] { ObjectTypeFlag.AIHeroClient };
-                targets = UnitManager.GetEnemies(flags);
+                targets = UnitManager.EnemyChampions.deepCopy().ToList<GameObjectBase>();
                 foreach (GameObjectBase target in targets)
                 {
                     if (DrawQ.IsOn && Env.QLevel >= 1)
                     {
-
-                        if (!(DrawQMode.SelectedModeName == "OnHPBar"))
+                        if (DrawQMode.SelectedModeName == "OnHPBar")
                         {
                             if (Env.ModuleVersion == Common.Enums.V.Preview)
                                 Logger.Log("Should Draw Q");
-                            if (!Render.HasDamage(_QDamage))
-                                Render.AddDamage(_QDamage);
-                            if (!_QDamage.IsOn)
-                                _QDamage.IsOn = true;
-                        }
-                        else
-                        {
-                            if (Render.HasDamage(_QDamage))
-                                _QDamage.IsOn = false;
                             RenderFactory.DrawHPBarDamage(target, QCalc.CalculateDamage(target));
                         }
                     }

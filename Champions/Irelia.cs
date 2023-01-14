@@ -196,7 +196,8 @@ namespace SyncWave.Champions
             if (!Env.Spells.GetSpellClass(Oasys.Common.Enums.GameEnums.SpellSlot.Q).IsSpellReady || Env.QLevel < 1)
                 return 0;
             float physicalDamage = QDamage[Env.QLevel] + (Env.Me().UnitStats.TotalAttackDamage * QADScaling);
-            physicalDamage += QExtraMinionDamage[Env.Me().Level - 1];
+            if (target.IsObject(Oasys.Common.Enums.GameEnums.ObjectTypeFlag.AIMinionClient))
+                physicalDamage += QExtraMinionDamage[Env.Me().Level - 1];
             return DamageCalculator.CalculateActualDamage(Env.Me(), target, physicalDamage);
         }
 
@@ -287,7 +288,8 @@ namespace SyncWave.Champions
             if (target.UnitComponentInfo.SkinName.Contains("Minion") && combo && HasMaxStacks() && !QMaxStacks)
             {
                 return false;
-            }
+            } if (target.UnitComponentInfo.SkinName.Contains("_P_TentacleAvatarActivex"))
+                return false;
             if (!QUnderTower && TS.InNexusRange(target))
                 return false;
             if (!QUnderTower)
@@ -308,7 +310,9 @@ namespace SyncWave.Champions
                 return false;
             if (ShouldCastQ(target, combo))
             {
-                SpellCastProvider.CastSpell(CastSlot.Q, target.Position);
+                Vector3 pos = target.Position;
+                pos.Y -= 5;
+                SpellCastProvider.CastSpell(CastSlot.Q, pos);
                 return true;
             }
             return false;

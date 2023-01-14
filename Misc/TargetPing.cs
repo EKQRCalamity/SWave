@@ -55,10 +55,10 @@ namespace SyncWave.Misc
 
         internal static Task MainTick()
         {
-            if (GameEngine.GameTime - LastCastTime > AddDelay.Value)
+            if (GameEngine.GameTime - LastCastTime > AddDelay.Value && Env.Me().IsAlive)
             {
                 GameObjectBase target = TargetSelector.GetBestChampionTarget();
-                if (IsEnabled.IsOn && target != null && target.IsObject(Oasys.Common.Enums.GameEnums.ObjectTypeFlag.AIHeroClient))
+                if (IsEnabled.IsOn && target != null && target.IsObject(Oasys.Common.Enums.GameEnums.ObjectTypeFlag.AIHeroClient) && target.IsTargetable)
                 {
                     PingManager.PingTo(PingFromMode(PingType.SelectedModeName), target.Position.ToW2S()); 
                     LastCastTime = GameEngine.GameTime;

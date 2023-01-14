@@ -140,7 +140,7 @@ namespace SyncWave.Common.SpellAim
                 if (TargetSelectMode.SelectedModeName == "NearToMouse")
                 {
                     target = AimUtils.NearestTargetToMouse(Range);
-                    if (prediction != null && target != null)
+                    if (prediction != null && target != null && target.IsAlive && target.IsVisible)
                     {
                         PredictionOutput pred = prediction.Predict(target);
                         if (pred.HitChance >= HitChance.VeryHigh)
@@ -156,7 +156,7 @@ namespace SyncWave.Common.SpellAim
                 } else
                 {
                     target = AimUtils.BestHeroTarget(Range);
-                    if (prediction != null && target != null)
+                    if (prediction != null && target != null && target.IsAlive && target.IsVisible)
                     {
                         PredictionOutput pred = prediction.Predict(target);
                         if (pred.HitChance >= HitChance.VeryHigh)

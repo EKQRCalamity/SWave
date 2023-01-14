@@ -60,7 +60,6 @@ namespace SyncWave.Misc
 
         internal static void Init()
         {
-            PingManager.Ping(PingSlot.Neutral);
             PingMenu.tab.AddGroup(group);
             group.AddItem(Enabled);
             group.AddItem(EnableMinimap);
