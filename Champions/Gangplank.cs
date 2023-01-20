@@ -14,6 +14,7 @@ using System.Windows.Forms;
 using Oasys.Common.EventsProvider;
 using Oasys.Common.GameObject.Clients;
 using Oasys.SDK.Tools;
+using SharpDX;
 
 namespace SyncWave.Champions
 { 
@@ -35,11 +36,32 @@ namespace SyncWave.Champions
             return damage;
         }
     }
+
+    internal class GPBarrelPos {
+        internal AIBaseClient SelectedBarrel { get; set; }
+        internal AIBaseClient SelectedTarget { get; set; }
+        internal Vector3 SelectedPosition { get; set; }
+        internal bool ValidPosition => SelectedPosition != Vector3.Zero;
+        internal bool ValidTarget => SelectedTarget != null && SelectedTarget.IsValidTarget();
+        internal bool ValidBarrel => SelectedBarrel != null && SelectedBarrel.IsAlive && SelectedBarrel.IsTargetable;
+
+        public GPBarrelPos(AIBaseClient selectedBarrel, AIBaseClient selectedTarget, Vector3 selectedPosition) {
+            SelectedBarrel = selectedBarrel;
+            SelectedTarget = selectedTarget;
+            SelectedPosition = selectedPosition;
+        }
+    }
+
     internal class Gangplank : Module
     {
         internal Tab MainTab = new Tab("SyncWave - GP");
         internal Group QGroup = new Group("Q Settings");
         internal List<AIBaseClient> Barrels => GetGangplankBarrels();
+        internal int QRange = 650;
+        internal int ERange = 1000;
+        internal int EExplosionRange = 360;
+        internal int EBindRange = 345;
+        internal Random randomGen = new Random();
 
         private List<AIBaseClient> GetGangplankBarrels()
         {
@@ -51,9 +73,36 @@ namespace SyncWave.Champions
             return barrels ;
         }
 
+        private GPBarrelPos GetBarrelPlacementPosition(AIBaseClient selectedBarrel=null, AIBaseClient selectedTarget=null) 
+        {
+            îf (selectedBarrel == null) 
+            {
+                List<AIBaseClient> barrels = Barrels.deepCopy();
+                AIBaseClient target;
+                if (selectedTarget == null) {
+                    target = Oasys.Common.Logic.TargetSelector.GetBestHeroTarget(null, (x=>x.Distance < ERange && x.IsTargetable && x.IsAlive));
+                } else {
+                    target = selectedTarget;
+                }
+                foreach (AIBaseClient barrel in barrels) 
+                {
+                    if (target.DistanceTo(barrel) < (EBindRange * 2) && target.Distance < ERange && Env.Me().DistanceTo(barrel) < QRange) 
+                    {
+                        if (target.DistanceTo(barrel) < EExplosionRange) {
+                            return new(barrel, target, Vector3.Zero);
+                        }
+                        Vector3 barrelPos = target.Position.Extend(Env.Me().Position, target.Position, -(randomGen.Next(5,35)));
+                        return new(barrel, target, barrelPos);
+                    }
+                }                
+            }
+            return new(null, null, Vector3.Zero);
+        }
+
+        QPQDamage QDamage = new QPQDamage();
+
         internal override void Init()
         {
-            QPQDamage QDamage = new QPQDamage();
             MenuManagerProvider
                 .AddTab(MainTab);
             MainTab.AddGroup(QGroup);
@@ -62,6 +111,28 @@ namespace SyncWave.Champions
             Render.AddDamage(qDamage);
             qDamage.IsOn = true;
             GameEvents.OnCreateObject += ObjectInspector;
+            CoreEvents.OnCoreMainInput += MainInput;
+        }
+
+        private Task MainInput() 
+        {
+            bool orgiIsOn = QDamage.IsOn;
+            QDamage.IsOn = false;
+            GPBarrelPos BarrelObj = GetBarrelPlacementPosition(null, null)
+            if (BarrelObj.ValidBarrel && BarrelObj.ValidTarget) 
+            {
+                if (Env.EReady &6 Env.ELevel >= 1 && Env.QReady && BarrelObj.SelectedBarrel.Health < 1.5) 
+                {
+                    if (!BarrelObj.ValidPosition) {
+                        SpelLCastProvider.CastSpell(CastSlot.Q, BarrelObj.SelectedBarrel.Position);
+                    } else {
+                        SpellCastProvider.CastSpell(CastSlot.E, BarrelObj.SelectedPosition);
+                        SpelLCastProvider.CastSpell(CastSlot.Q, BarrelObj.SelectedBarrel.Position);
+                    }
+                }
+            }
+            QDamage.IsOn = origIsOn;
+            return Task.CompletedTask;
         }
 
         private Task ObjectInspector(List<AIBaseClient> callbackObjectList, AIBaseClient callbackObject, float callbackGameTime)
