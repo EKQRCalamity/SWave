@@ -37,6 +37,23 @@ namespace SyncWave.Champions
         }
     }
 
+    internal class _RDamage : DamageCalculation {
+        internal int[] RBaseDamage = new int[] { 0, 480, 840, 1200 };
+        internal float APScaling = 1.2f;
+
+        internal override float CalculateDamage(GameObjectBase target)
+        {
+            float damage = 0;
+            if (target.IsValidTarget() && target.IsAlive && target.IsTargetable)
+            {
+                damage = RBaseDamage[Env.RLevel];
+                damage = damage + (Env.Me().UnitStats.TotalAbiltiyPower * APScaling);
+                damage = DamageCalculator.CalculateActualDamage(Env.Me(), target, 0, damage, 0);
+            }
+            return damage;
+        }
+    }
+
     internal class GPBarrelPos {
         internal AIBaseClient SelectedBarrel { get; set; }
         internal AIBaseClient SelectedTarget { get; set; }
@@ -56,6 +73,7 @@ namespace SyncWave.Champions
     {
         internal Tab MainTab = new Tab("SyncWave - GP");
         internal Group QGroup = new Group("Q Settings");
+        internal Group RGroup = new Group("R Settings");
         internal List<AIBaseClient> Barrels => GetGangplankBarrels();
         internal int QRange = 650;
         internal int ERange = 1000;
@@ -100,6 +118,7 @@ namespace SyncWave.Champions
         }
 
         QPQDamage QDamage = new QPQDamage();
+        _RDamage RDamage = new RDamage();
 
         internal override void Init()
         {
@@ -107,8 +126,11 @@ namespace SyncWave.Champions
                 .AddTab(MainTab);
             MainTab.AddGroup(QGroup);
             TargetedSpell targetSpell = new TargetedSpell(MainTab, QGroup, Oasys.SDK.SpellCasting.CastSlot.Q, Oasys.Common.Enums.GameEnums.SpellSlot.Q, true, QDamage, (x => x.IsAlive && x.IsObject(Oasys.Common.Enums.GameEnums.ObjectTypeFlag.AIHeroClient)), 625, 55);
+            CircleSpell rSpell = new CircleSpell(MainTab, RGroup, Oasys.SDK.SpellCasting.CastSlot.R, Oasys.Common.Enums.GameEnums.SpellSlot.Q, true, _RDamage, (x => x.IsAlive && x.IsObject(Oasys.Common.Enums.GameEnums.ObjectTypeFlag.AIHeroClient)), 20000, 580)
             Damage qDamage = new Damage("Q", (uint)6, QDamage, SharpDX.Color.AliceBlue);
+            Damage rDamage = new Damage("R", (uint)4, RDamage, SharpDX.Color.Red);
             Render.AddDamage(qDamage);
+            Render.AddDamage(rDamage);
             qDamage.IsOn = true;
             GameEvents.OnCreateObject += ObjectInspector;
             CoreEvents.OnCoreMainInput += MainInput;

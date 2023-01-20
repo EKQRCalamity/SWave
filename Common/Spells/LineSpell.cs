@@ -22,8 +22,10 @@ namespace SyncWave.Common.Spells
         internal int Width { get; set; }
         internal Prediction? Prediction;
         internal ModeDisplay HitChance { get; set; }
-        public LineSpell(Tab mainTab, Group group, CastSlot castSlot, SpellSlot spellSlot, bool enabled, DamageCalculation effectCalculator, Func<GameObjectBase, bool> targetSelector, int range, int width, int minMana = 0)
+        internal float castTime;
+        public LineSpell(Tab mainTab, Group group, CastSlot castSlot, SpellSlot spellSlot, bool enabled, DamageCalculation effectCalculator, Func<GameObjectBase, bool> targetSelector, int range, int width, float CastTime = 0, int minMana = 0)
         {
+            castTime = CastTime;
             MainTab = mainTab;
             SpellGroup = group;
             SpellSlot = spellSlot;
@@ -49,37 +51,21 @@ namespace SyncWave.Common.Spells
         }
         internal Task MainTick()
         {
-            if (MainInput)
+            if (MainInput && IsOn.IsOn)
             {
                 CoreEvents.OnCoreMainInputAsync += MainInputFunction;
             }
-            else
-            {
-                CoreEvents.OnCoreMainInputAsync -= MainInputFunction;
-            }
-            if (Harass)
+            if (Harass && IsOn.IsOn)
             {
                 CoreEvents.OnCoreHarassInputAsync += MainInputFunction;
             }
-            else
-            {
-                CoreEvents.OnCoreHarassInputAsync -= MainInputFunction;
-            }
-            if (Push)
+            if (Push && IsOn.IsOn)
             {
                 CoreEvents.OnCoreLaneclearInputAsync += PushInputFunction;
             }
-            else
-            {
-                CoreEvents.OnCoreLaneclearInputAsync -= PushInputFunction;
-            }
-            if (MainInput)
+            if (MainInput && IsOn.IsOn)
             {
                 CoreEvents.OnCoreLasthitInputAsync += LastHitInputFunction;
-            }
-            else
-            {
-                CoreEvents.OnCoreLasthitInputAsync -= LastHitInputFunction;
             }
             return Task.CompletedTask;
         }
@@ -93,7 +79,7 @@ namespace SyncWave.Common.Spells
                 {
                     if (Env.Me().Mana > MinMana.Value)
                     {
-                        SpellCastProvider.CastSpell(CastSlot, enemy.Position);
+                        SpellCastProvider.CastSpell(CastSlot, enemy.Position, castTime);
                     }
                 }
             }
@@ -109,7 +95,7 @@ namespace SyncWave.Common.Spells
                 {
                     if (Env.Me().Mana > MinMana.Value)
                     {
-                        SpellCastProvider.CastSpell(CastSlot, enemy.Position);
+                        SpellCastProvider.CastSpell(CastSlot, enemy.Position, castTime);
                     }
                 }
             }
@@ -123,14 +109,14 @@ namespace SyncWave.Common.Spells
             {
                 if (Prediction == null)
                 {
-                    SpellCastProvider.CastSpell(CastSlot, target.Position);
+                    SpellCastProvider.CastSpell(CastSlot, target.Position, castTime);
                 }
                 else
                 {
                     Oasys.SDK.Prediction.MenuSelected.PredictionOutput pred = Prediction.Predict(target);
                     if (pred.HitChance > GetHitchanceFromName(HitChance.SelectedModeName) && SpellIsReady() && Env.Me().Mana > MinMana.Value)
                     {
-                        SpellCastProvider.CastSpell(CastSlot, pred.CastPosition);
+                        SpellCastProvider.CastSpell(CastSlot, pred.CastPosition, castTime);
                     }
                 }
             }

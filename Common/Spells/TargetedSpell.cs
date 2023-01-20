@@ -18,8 +18,11 @@ namespace SyncWave.Common.Spells
 {
     internal class TargetedSpell : SpellCastBase
     {
-        public TargetedSpell(Tab mainTab, Group group, CastSlot castSlot, SpellSlot spellSlot, bool enabled, DamageCalculation effectCalculator, Func<GameObjectBase, bool> targetSelector, int range, int minMana = 0)
+        internal float castTime;
+
+        public TargetedSpell(Tab mainTab, Group group, CastSlot castSlot, SpellSlot spellSlot, bool enabled, DamageCalculation effectCalculator, Func<GameObjectBase, bool> targetSelector, int range, float CastTime = 0,int minMana = 0)
         {
+            castTime = CastTime;
             MainTab = mainTab;
             SpellGroup= group;
             SpellSlot= spellSlot;
@@ -64,7 +67,7 @@ namespace SyncWave.Common.Spells
                 {
                     if ((enemy.Health - EffectCalculator.CalculateDamage(enemy)) < 0 && Env.Me().Mana > MinMana.Value && this.SpellIsReady())
                     {
-                        SpellCastProvider.CastSpell(CastSlot, enemy.Position);
+                        SpellCastProvider.CastSpell(CastSlot, enemy.Position, castTime);
                     }
                 }
             }
@@ -80,7 +83,7 @@ namespace SyncWave.Common.Spells
                 {
                     if (Env.Me().Mana > MinMana.Value)
                     {
-                        SpellCastProvider.CastSpell(CastSlot, enemy.Position);
+                        SpellCastProvider.CastSpell(CastSlot, enemy.Position, castTime);
                     }
                 }
             }
@@ -94,7 +97,7 @@ namespace SyncWave.Common.Spells
             {
                 if (target.IsAlive && target.IsTargetable && target.IsValidTarget() && target.IsObject(ObjectTypeFlag.AIHeroClient) && this.SpellIsReady())
                 {
-                    SpellCastProvider.CastSpell(CastSlot, target.Position);
+                    SpellCastProvider.CastSpell(CastSlot, target.Position, castTime);
                 }
             }
             return Task.CompletedTask;
