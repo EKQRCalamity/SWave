@@ -171,9 +171,9 @@ namespace SyncWave.Champions
             _EDamage = new Damage("E", (uint)EPrio.Value, ECalc, ColorConverter.GetColor(EColor.SelectedModeName));
             _RDamage = new Damage("R", (uint)RPrio.Value, RCalc, ColorConverter.GetColor(RColor.SelectedModeName));
             Logger.Log("LeeSin Initialized!");
-            Common.SpellAim.AimSpell Q = new(QRange, LeeSinTab, CastSlot.Q, Oasys.Common.Enums.GameEnums.SpellSlot.Q);
+            Common.Spells.AimSpell Q = new(QRange, LeeSinTab, CastSlot.Q, Oasys.Common.Enums.GameEnums.SpellSlot.Q);
             Q.SetPrediction(Prediction.MenuSelected.PredictionType.Line, QRange, QWidth, QCastTime, QSpeed, true);
-            Common.SpellAim.AimSpell R = new(RTargetRange, LeeSinTab, CastSlot.R, Oasys.Common.Enums.GameEnums.SpellSlot.R);
+            Common.Spells.AimSpell R = new(RTargetRange, LeeSinTab, CastSlot.R, Oasys.Common.Enums.GameEnums.SpellSlot.R);
         }
 
         #region Logic

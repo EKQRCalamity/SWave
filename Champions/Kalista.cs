@@ -134,7 +134,7 @@ namespace SyncWave.Champions
             _QDamage = new Damage("Q", (uint)DrawQPrio.Value, QCalc, ColorConverter.GetColor(DrawQColor.SelectedModeName));
             _EDamage = new Damage("E", (uint)DrawEPrio.Value, ECalc, ColorConverter.GetColor(DrawEColor.SelectedModeName));
             Logger.Log("Kalista Initialized!");
-            Common.SpellAim.AimSpell Q = new Common.SpellAim.AimSpell(QRange, KalistaTab, CastSlot.Q, SpellSlot.Q);
+            Common.Spells.AimSpell Q = new Common.Spells.AimSpell(QRange, KalistaTab, CastSlot.Q, SpellSlot.Q);
             Q.SetPrediction(Prediction.MenuSelected.PredictionType.Line, Champions.Kalista.QRange - 40, Champions.Kalista.QWidth, Champions.Kalista.QCastTime, Champions.Kalista.QSpeed, true);
             Render.AddDamage(_QDamage);
             Render.AddDamage( _EDamage);

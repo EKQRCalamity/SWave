@@ -10,7 +10,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace SyncWave.Common.SpellAim
+namespace SyncWave.Common.Spells
 {
     internal static class AimUtils
     {

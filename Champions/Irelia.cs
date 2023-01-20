@@ -503,7 +503,7 @@ namespace SyncWave.Champions
             CoreEvents.OnCoreLaneclearInputAsync += LCI;
             CoreEvents.OnCoreRender += OnCoreRenderTick;
             GameEvents.OnCreateObject += OnCreateObject;
-            Common.SpellAim.AimSpell R = new(RRange, MenuManager.GetTab(TabIndex), CastSlot.R, Oasys.Common.Enums.GameEnums.SpellSlot.R);
+            Common.Spells.AimSpell R = new(RRange, MenuManager.GetTab(TabIndex), CastSlot.R, Oasys.Common.Enums.GameEnums.SpellSlot.R);
             R.SetPrediction(Prediction.MenuSelected.PredictionType.Line, RRange, RWidth, RCastTime, RSpeed, false);
         }
 

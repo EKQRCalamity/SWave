@@ -13,7 +13,7 @@ using SharpDX;
 using SyncWave.Base;
 using SyncWave.Common.Extensions;
 using SyncWave.Common.Helper;
-using SyncWave.Common.SpellAim;
+using SyncWave.Common.Spells;
 using SyncWave.Misc;
 using System;
 using System.Collections.Generic;

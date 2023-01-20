@@ -218,10 +218,10 @@ namespace SyncWave.Champions
                 Logger.Log(target.BuffManager.HasActiveBuff("nidaleepassivehunted"));
             return target.BuffManager.HasActiveBuff("nidaleepassivehunted");
         }
-        Common.SpellAim.AimSpell? CougarQ;
-        Common.SpellAim.AimSpell? JavelinQ;
-        Common.SpellAim.AimSpell? CougarW;
-        Common.SpellAim.AimSpell? CougarE;
+        Common.Spells.AimSpell? CougarQ;
+        Common.Spells.AimSpell? JavelinQ;
+        Common.Spells.AimSpell? CougarW;
+        Common.Spells.AimSpell? CougarE;
 
         internal override void Init()
         {

@@ -181,7 +181,7 @@ namespace SyncWave.Champions
             return EnemiesInRange(range, originPos) >= n;
         }
 
-        Common.SpellAim.AimSpell? Q;
+        Common.Spells.AimSpell? Q;
 
         #endregion
 

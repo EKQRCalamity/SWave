@@ -19,7 +19,7 @@ using System.Threading.Tasks;
 using System.Windows.Forms;
 using static Oasys.SDK.Prediction.MenuSelected;
 
-namespace SyncWave.Common.SpellAim
+namespace SyncWave.Common.Spells
 {
     internal class Prediction
     {
