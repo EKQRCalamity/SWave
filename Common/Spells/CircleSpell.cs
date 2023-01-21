@@ -1,4 +1,4 @@
-﻿using Oasys.Common.Enums.GameEnums;
+using Oasys.Common.Enums.GameEnums;
 using Oasys.Common.GameObject;
 using Oasys.SDK.SpellCasting;
 using Oasys.SDK;
@@ -17,13 +17,14 @@ using SharpDX;
 namespace SyncWave.Common.Spells
 {
 
-    internal class LineSpell : SpellCastBase
+    internal class CircleSpell : SpellCastBase
     {
         internal int Width { get; set; }
         internal Prediction? Prediction;
         internal ModeDisplay HitChance { get; set; }
         internal float castTime;
-        public LineSpell(Tab mainTab, Group group, CastSlot castSlot, SpellSlot spellSlot, bool enabled, DamageCalculation effectCalculator, Func<GameObjectBase, bool> targetSelector, int range, int width, float CastTime = 0, int minMana = 0, bool canKill = false, bool harass = false, bool laneclear = false, bool lasthit = false)
+
+        public CircleSpell(Tab mainTab, Group group, CastSlot castSlot, SpellSlot spellSlot, bool enabled, DamageCalculation effectCalculator, Func<GameObjectBase, bool> targetSelector, int range, int radius, float CastTime = 0, int minMana = 0, bool canKill = false, bool harass = false, bool laneclear = false, bool lasthit = false)
         {
             castTime = CastTime;
             MainTab = mainTab;
@@ -38,8 +39,9 @@ namespace SyncWave.Common.Spells
             LasthitIsOn = new Switch("Lasthit", false);
             CanKill = canKill;
             Range = range;
-            Width = width;
+            Width = radius;
             TargetSelector = targetSelector;
+            EffectCalculator = effectCalculator;
             group.AddItem(IsOn);
             group.AddItem(MinMana);
             group.AddItem(HitChance);
@@ -66,8 +68,9 @@ namespace SyncWave.Common.Spells
         {
             if (origPos == null)
                 origPos = Env.Me().Position;
-            Prediction = new(Oasys.SDK.Prediction.MenuSelected.PredictionType.Line, Range, Width, delay, speed, collisioncheck, origPos);
+            Prediction = new(Oasys.SDK.Prediction.MenuSelected.PredictionType.Circle, Range, Width, delay, speed, collisioncheck, origPos);
         }
+
         internal Task MainTick()
         {
             if (MainInput && IsOn.IsOn && !Initialized)
@@ -125,11 +128,12 @@ namespace SyncWave.Common.Spells
         private Task MainInputFunction()
         {
             GameObjectBase? target = Oasys.Common.Logic.TargetSelector.GetBestHeroTarget(null, (x => x.Distance < Range));
-            if (target != null)
+            if (target != null && IsOn.IsOn)
             {
+                
                 if (Prediction == null)
                 {
-                    if ((CanKill) ? target.Health - EffectCalculator.CalculateDamage(target) < 0 : true)
+                    if ((CanKill)? target.Health - EffectCalculator.CalculateDamage(target) < 0 : true)
                     {
                         Vector3 tpos = target.Position;
                         Vector2 pos = tpos.ToW2S();

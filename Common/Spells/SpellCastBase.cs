@@ -23,10 +23,15 @@ namespace SyncWave.Common.Spells
         internal Tab MainTab { get; set; }
         internal Group SpellGroup { get; set; }
         internal Switch IsOn { get; set; }
+        internal Switch HarassIsOn { get; set; }
+        internal Switch LaneclearIsOn { get; set; }
+        internal Switch LasthitIsOn { get; set; }
         internal Counter MinMana { get; set; }
         internal int Range { get; set; }
         internal DamageCalculation EffectCalculator { get; set; }
+        internal bool CanKill { get; set; }
         internal Func<GameObjectBase, bool> TargetSelector { get; set; }
+        internal bool Initialized { get; set; } = false;
         internal bool TargetInRange(GameObjectBase target)
         {
             return target.Distance < Range;
