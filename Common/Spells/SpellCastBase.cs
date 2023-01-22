@@ -32,6 +32,9 @@ namespace SyncWave.Common.Spells
         internal bool CanKill { get; set; }
         internal Func<GameObjectBase, bool> TargetSelector { get; set; }
         internal bool Initialized { get; set; } = false;
+        internal bool HarassInitialized { get; set; } = false;
+        internal bool LaneclearInitialized { get; set; } = false;
+        internal bool LasthitInitialized { get; set; } = false;
         internal bool TargetInRange(GameObjectBase target)
         {
             return target.Distance < Range;

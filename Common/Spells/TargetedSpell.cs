@@ -62,28 +62,31 @@ namespace SyncWave.Common.Spells
             if (MainInput && IsOn.IsOn && !Initialized)
             {
                 CoreEvents.OnCoreMainInputAsync += MainInputFunction;
-                Initialized= true;
-                Logger.Log("Initalized");
+                Initialized = true;
             }
-            if (Harass && IsOn.IsOn && !Initialized)
+            if (Harass && HarassIsOn.IsOn && !HarassInitialized)
             {
-                CoreEvents.OnCoreHarassInputAsync += MainInputFunction;
+                CoreEvents.OnCoreHarassInputAsync += HarassInputFunction;
+                HarassInitialized = true;
             }
-            if (Push && IsOn.IsOn && !Initialized)
+            if (Push && LasthitIsOn.IsOn && !LaneclearInitialized)
             {
                 CoreEvents.OnCoreLaneclearInputAsync += PushInputFunction;
+                LaneclearInitialized = true;
             }
-            if (MainInput && IsOn.IsOn && !Initialized)
+            if (MainInput && LaneclearIsOn.IsOn && !LasthitInitialized)
             {
                 CoreEvents.OnCoreLasthitInputAsync += LastHitInputFunction;
+                LasthitInitialized = true;
             }
             return Task.CompletedTask;
         }
 
         private Task LastHitInputFunction()
         {
-            ObjectTypeFlag[] flags = new ObjectTypeFlag[] { ObjectTypeFlag.AIMinionClient };
-            foreach (GameObjectBase enemy in UnitManager.GetEnemies(flags))
+            if (!LasthitIsOn.IsOn || !IsOn.IsOn)
+                return Task.CompletedTask;
+            foreach (GameObjectBase enemy in UnitManager.EnemyMinions)
             {
                 if (enemy.IsAlive && enemy.IsTargetable && enemy.IsValidTarget() && enemy.Distance < Range)
                 {
@@ -98,8 +101,9 @@ namespace SyncWave.Common.Spells
 
         private Task PushInputFunction()
         {
-            ObjectTypeFlag[] flags = new ObjectTypeFlag[] { ObjectTypeFlag.AIMinionClient };
-            foreach (GameObjectBase enemy in UnitManager.GetEnemies(flags))
+            if (!LaneclearIsOn.IsOn || !IsOn.IsOn)
+                return Task.CompletedTask;
+            foreach (GameObjectBase enemy in UnitManager.EnemyMinions)
             {
                 if (enemy.IsAlive && enemy.IsTargetable && enemy.IsValidTarget() && enemy.Distance < Range && this.SpellIsReady())
                 {
@@ -107,6 +111,20 @@ namespace SyncWave.Common.Spells
                     {
                         SpellCastProvider.CastSpell(CastSlot, enemy.Position, castTime);
                     }
+                }
+            }
+            return Task.CompletedTask;
+        }
+
+        private Task HarassInputFunction()
+        {
+            GameObjectBase? target = Oasys.Common.Logic.TargetSelector.GetBestHeroTarget(null, (x => x.Distance < Range));
+            if (target != null && HarassIsOn.IsOn && IsOn.IsOn)
+            {
+                if (target.IsAlive && target.IsTargetable && target.IsValidTarget() && target.IsObject(ObjectTypeFlag.AIHeroClient) && this.SpellIsReady())
+                {
+                    if ((CanKill) ? target.Health - EffectCalculator.CalculateDamage(target) < 0 : true)
+                        SpellCastProvider.CastSpell(CastSlot, target.Position, castTime);
                 }
             }
             return Task.CompletedTask;

@@ -13,6 +13,7 @@ using Oasys.Common.Menu.ItemComponents;
 using Oasys.Common.EventsProvider;
 using Oasys.Common.Menu;
 using SharpDX;
+using Oasys.SDK.Tools;
 
 namespace SyncWave.Common.Spells
 {
@@ -21,9 +22,11 @@ namespace SyncWave.Common.Spells
     {
         internal int Width { get; set; }
         internal Prediction? Prediction;
+        internal bool CollisionCheck;
+        internal int HeroCollisions;
         internal ModeDisplay HitChance { get; set; }
         internal float castTime;
-        public LineSpell(Tab mainTab, Group group, CastSlot castSlot, SpellSlot spellSlot, bool enabled, DamageCalculation effectCalculator, Func<GameObjectBase, bool> targetSelector, int range, int width, float CastTime = 0, int minMana = 0, bool canKill = false, bool harass = false, bool laneclear = false, bool lasthit = false)
+        public LineSpell(Tab mainTab, Group group, CastSlot castSlot, SpellSlot spellSlot, bool enabled, DamageCalculation effectCalculator, Func<GameObjectBase, bool> targetSelector, int range, int width, float CastTime = 0, int minMana = 0, bool canKill = false, bool harass = false, bool laneclear = false, bool lasthit = false, bool collisionCheck = false, int heroCollisions = 0)
         {
             castTime = CastTime;
             MainTab = mainTab;
@@ -36,6 +39,8 @@ namespace SyncWave.Common.Spells
             HarassIsOn = new Switch("Harass", false);
             LaneclearIsOn = new Switch("Laneclear", false);
             LasthitIsOn = new Switch("Lasthit", false);
+            CollisionCheck = collisionCheck;
+            HeroCollisions = heroCollisions;
             CanKill = canKill;
             Range = range;
             Width = width;
@@ -68,6 +73,12 @@ namespace SyncWave.Common.Spells
                 origPos = Env.Me().Position;
             Prediction = new(Oasys.SDK.Prediction.MenuSelected.PredictionType.Line, Range, Width, delay, speed, collisioncheck, origPos);
         }
+
+        internal void SetPrediction(float delay, float speed, bool collisioncheck)
+        {
+            Prediction = new(Oasys.SDK.Prediction.MenuSelected.PredictionType.Line, Range, Width, delay, speed, collisioncheck);
+        }
+
         internal Task MainTick()
         {
             if (MainInput && IsOn.IsOn && !Initialized)
@@ -75,23 +86,28 @@ namespace SyncWave.Common.Spells
                 CoreEvents.OnCoreMainInputAsync += MainInputFunction;
                 Initialized = true;
             }
-            if (Harass && IsOn.IsOn && !Initialized)
+            if (Harass && HarassIsOn.IsOn && !HarassInitialized)
             {
-                CoreEvents.OnCoreHarassInputAsync += MainInputFunction;
+                CoreEvents.OnCoreHarassInputAsync += HarassInputFunction;
+                HarassInitialized = true;
             }
-            if (Push && IsOn.IsOn && !Initialized)
+            if (Push && LasthitIsOn.IsOn && !LaneclearInitialized)
             {
                 CoreEvents.OnCoreLaneclearInputAsync += PushInputFunction;
+                LaneclearInitialized = true;
             }
-            if (MainInput && IsOn.IsOn && !Initialized)
+            if (MainInput && LaneclearIsOn.IsOn && !LasthitInitialized)
             {
                 CoreEvents.OnCoreLasthitInputAsync += LastHitInputFunction;
+                LasthitInitialized = true;
             }
             return Task.CompletedTask;
         }
 
         private Task LastHitInputFunction()
         {
+            if (!LasthitIsOn.IsOn || !IsOn.IsOn)
+                return Task.CompletedTask;
             ObjectTypeFlag[] flags = new ObjectTypeFlag[] { ObjectTypeFlag.AIMinionClient };
             foreach (GameObjectBase enemy in UnitManager.GetEnemies(flags))
             {
@@ -108,6 +124,8 @@ namespace SyncWave.Common.Spells
 
         private Task PushInputFunction()
         {
+            if (!LaneclearIsOn.IsOn || !IsOn.IsOn)
+                return Task.CompletedTask;
             ObjectTypeFlag[] flags = new ObjectTypeFlag[] { ObjectTypeFlag.AIMinionClient };
             foreach (GameObjectBase enemy in UnitManager.GetEnemies(flags))
             {
@@ -122,10 +140,10 @@ namespace SyncWave.Common.Spells
             return Task.CompletedTask;
         }
 
-        private Task MainInputFunction()
+        private Task HarassInputFunction()
         {
             GameObjectBase? target = Oasys.Common.Logic.TargetSelector.GetBestHeroTarget(null, (x => x.Distance < Range));
-            if (target != null)
+            if (target != null&& IsOn.IsOn && HarassIsOn.IsOn)
             {
                 if (Prediction == null)
                 {
@@ -141,7 +159,52 @@ namespace SyncWave.Common.Spells
                 else
                 {
                     Oasys.SDK.Prediction.MenuSelected.PredictionOutput pred = Prediction.Predict(target);
-                    if (pred.HitChance > GetHitchanceFromName(HitChance.SelectedModeName) && SpellIsReady() && Env.Me().Mana > MinMana.Value)
+                    if (pred.Collision && CollisionCheck)
+                    {
+                        if (pred.CollisionObjects.Where(x => !x.IsObject(ObjectTypeFlag.AIHeroClient) && x.ModelName != target.ModelName).Count() >= HeroCollisions)
+                            return Task.CompletedTask;
+                    }
+                    if (pred.HitChance >= GetHitchanceFromName(HitChance.SelectedModeName) && SpellIsReady() && Env.Me().Mana > MinMana.Value)
+                    {
+                        if ((CanKill) ? target.Health - EffectCalculator.CalculateDamage(target) < 0 : true)
+                        {
+                            Vector3 tpos = pred.CastPosition;
+                            Vector2 pos = tpos.ToW2S();
+                            if (!tpos.IsOnScreen())
+                                pos = tpos.ToWorldToMap();
+                            SpellCastProvider.CastSpell(CastSlot, pos, castTime);
+                        }
+                    }
+                }
+            }
+            return Task.CompletedTask;
+        }
+
+        private Task MainInputFunction()
+        {
+            GameObjectBase? target = Oasys.Common.Logic.TargetSelector.GetBestHeroTarget(null, (x => x.Distance < Range));
+            if (target != null && IsOn.IsOn)
+            {
+                if (Prediction == null)
+                {
+                    if ((CanKill) ? target.Health - EffectCalculator.CalculateDamage(target) < 0 : true)
+                    {
+                        Vector3 tpos = target.Position;
+                        Vector2 pos = tpos.ToW2S();
+                        if (!tpos.IsOnScreen())
+                            pos = tpos.ToWorldToMap();
+                        SpellCastProvider.CastSpell(CastSlot, pos, castTime);
+                    }
+                }
+                else
+                {
+                    Oasys.SDK.Prediction.MenuSelected.PredictionOutput pred = Prediction.Predict(target);
+                    if (pred.Collision && CollisionCheck)
+                    {
+                        if (pred.CollisionObjects.Where(x => !x.IsObject(ObjectTypeFlag.AIHeroClient)).Count() >= HeroCollisions)
+                            return Task.CompletedTask;
+                    }
+                    if (pred.HitChance >= GetHitchanceFromName(HitChance.SelectedModeName) && SpellIsReady() && Env.Me().Mana > MinMana.Value)
                     {
                         if ((CanKill) ? target.Health - EffectCalculator.CalculateDamage(target) < 0 : true)
                         {

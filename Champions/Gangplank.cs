@@ -355,7 +355,7 @@ namespace SyncWave.Champions
             WGroup.AddItem(WEnabled);
             EGroup.AddItem(EEnabled);
             EGroup.AddItem(DrawBarrels);
-            qTargeted = new TargetedSpell(MainTab, QGroup, Oasys.SDK.SpellCasting.CastSlot.Q, Oasys.Common.Enums.GameEnums.SpellSlot.Q, true, QDamage, (x => x.IsAlive && x.IsObject(Oasys.Common.Enums.GameEnums.ObjectTypeFlag.AIHeroClient)), 625, 0.25F, 55);
+            qTargeted = new TargetedSpell(MainTab, QGroup, Oasys.SDK.SpellCasting.CastSlot.Q, Oasys.Common.Enums.GameEnums.SpellSlot.Q, true, QDamage, (x => x.IsAlive && x.IsObject(Oasys.Common.Enums.GameEnums.ObjectTypeFlag.AIHeroClient)), 625, 0.25F, 55, false, true, false, true);
             rCircle = new CircleSpell(MainTab, RGroup, CastSlot.R, SpellSlot.R, true, RDamage, (x => x.IsAlive && x.IsObject(Oasys.Common.Enums.GameEnums.ObjectTypeFlag.AIHeroClient)), 20000, 580, 0.25F, 100, true);
             Damage qDamage = new Damage("Q", (uint)6, QDamage, SharpDX.Color.AliceBlue);
             Damage rDamage = new Damage("R", (uint)4, RDamage, SharpDX.Color.Red);
