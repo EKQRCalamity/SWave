@@ -45,13 +45,7 @@ namespace SyncWave.Champions
             float stacks = EStacks(target);
             float APScaling = 0.03F * stacks;
             float RawDamage = (float)(1 * Math.Floor((decimal)(Env.Me().Level / 4))) * stacks;
-            if (Twitch.PDrawMode.SelectedModeName == "PerSecond")
-            {
-                damage = RawDamage + (APScaling * Env.Me().UnitStats.TotalAbilityPower);
-            } else
-            {
-                damage = (RawDamage + (APScaling * Env.Me().UnitStats.TotalAbilityPower)) * (float)PassiveDuration(target);
-            }
+            damage = (RawDamage + (APScaling * Env.Me().UnitStats.TotalAbilityPower)) * (float)PassiveDuration(target);
             return damage;
         }
 
@@ -127,12 +121,11 @@ namespace SyncWave.Champions
         {
             Logger.Log("Twitch Initializing...");
             InitMenu();
-            CoreEvents.OnCoreMainTick += CoreEvents_OnCoreMainTick;
             CoreEvents.OnCoreMainInputAsync += OnCoreMainInput;
             CoreEvents.OnCoreRender += Draw;
             Render.Init();
-            _PDamage = new("", (uint)PPrio.Value, PCalc, ColorConverter.GetColor(PColor.SelectedModeName));
-            _EDamage = new("E", (uint)DrawEPrio.Value, ECalc, ColorConverter.GetColor(DrawEColor.SelectedModeName));
+            _PDamage = new(TwitchTab, PGroup, "P", (uint)4, PCalc, Color.Green);
+            _EDamage = new(TwitchTab, EGroup, "E", (uint)6, ECalc, Color.Red);
             Render.AddDamage(_PDamage);
             Render.AddDamage(_EDamage);
             Logger.Log("Twitch Initialized!");
@@ -244,42 +237,14 @@ namespace SyncWave.Champions
                 if (target.Distance < QRange.Value)
                 {
                     SpellCastProvider.CastSpell(CastSlot.Q);
-                } 
+                }
             }
         }
 
-        private Task CoreEvents_OnCoreMainTick()
-        {
-            if (!DrawP.IsOn)
-            {
-                _PDamage.IsOn = false;
-            } else
-            {
-                _PDamage.IsOn = true;
-            }
-            if (!DrawE.IsOn || DrawEMode.SelectedModeName == "OnHPBar")
-            {
-                _EDamage.IsOn = false;
-            } else
-            {
-                _EDamage.IsOn = true;
-            }
-
-            _PDamage.UpdateColor(ColorConverter.GetColor(PColor.SelectedModeName));
-            _PDamage.UpdatePriority((uint)PPrio.Value);
-            _EDamage.UpdateName((DrawEMode.SelectedModeName == "AboveHPBar") ? "E" : String.Empty);
-            _EDamage.UpdateColor(ColorConverter.GetColor(DrawEColor.SelectedModeName));
-            _EDamage.UpdatePriority((uint)DrawEPrio.Value);
-            return Task.CompletedTask;
-        }
 
         internal static Tab TwitchTab = new Tab("SyncWave - Twitch");
 
         internal static Group PGroup = new("Passive Settings");
-        internal static Switch DrawP = new("Draw Passive Damage", true);
-        internal static ModeDisplay PDrawMode = new() { Title = "Draw Mode", ModeNames = { "PerSecond", "OverDuration" }, SelectedModeName = "OverDuration" };
-        internal static Counter PPrio = new("Draw Prio", 7, 1, 10);
-        internal static ModeDisplay PColor = new() { Title = "Draw Color", ModeNames = ColorConverter.GetColors(), SelectedModeName = "White" };
 
         internal static Group QGroup = new("Q Settings");
         internal static Switch QEnabled = new("Enabled", true);
@@ -296,21 +261,12 @@ namespace SyncWave.Champions
 
         internal static Group EGroup = new("E Settings");
         internal static Switch EEnabled = new("Enabled", true);
-        internal static Switch DrawE = new Switch("Draw E Damage", true);
-        internal static ModeDisplay DrawEMode = new ModeDisplay() { Title = "Draw Mode", ModeNames = new() { "AboveHPBar", "AboveWithoutName", "OnHPBar" } };
-        internal static Counter DrawEPrio = new Counter("Draw Prio", 8, 1, 10);
-        internal static InfoDisplay EPrioInfo = new InfoDisplay() { Title = "Prio", Information = "Prio doesnt work for OnHPBar" };
-        internal static ModeDisplay DrawEColor = new ModeDisplay() { Title = "Draw Color", ModeNames = ColorConverter.GetColors(), SelectedModeName = "Orange" };
-        
+
         private void InitMenu()
         {
             MenuManagerProvider.AddTab(TwitchTab);
-            
+
             TwitchTab.AddGroup(PGroup);
-            PGroup.AddItem(DrawP);
-            PGroup.AddItem(PDrawMode);
-            PGroup.AddItem(PPrio);
-            PGroup.AddItem(PColor);
 
             TwitchTab.AddGroup(QGroup);
             QGroup.AddItem(QEnabled);
@@ -327,11 +283,6 @@ namespace SyncWave.Champions
 
             TwitchTab.AddGroup(EGroup);
             EGroup.AddItem(EEnabled);
-            EGroup.AddItem(DrawE);
-            EGroup.AddItem(DrawEMode);
-            EGroup.AddItem(DrawEPrio);
-            EGroup.AddItem(EPrioInfo);
-            EGroup.AddItem(DrawEColor);
         }
     }
 }

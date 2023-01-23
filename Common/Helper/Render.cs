@@ -2,6 +2,7 @@
 using Oasys.Common.Extensions;
 using Oasys.Common.GameObject;
 using Oasys.Common.GameObject.ObjectClass;
+using Oasys.Common.Menu;
 using Oasys.Common.Menu.ItemComponents;
 using Oasys.SDK;
 using Oasys.SDK.Tools;
@@ -20,44 +21,71 @@ namespace SyncWave.Common.Helper
 
     internal class Damage
     {
-        internal string Name { get; set; }
-        internal Color Color { get; private set; }
-        internal bool IsOn { get; set; }
-        internal uint Priority { get; private set; }
+        internal string OrigName { get; set; }
+        internal string Name => GetName();
+        internal Color Color => GetColor();
+        internal bool IsOn => IsOnSwitch.IsOn && IsOnFunc(Env.Me());
+        internal Func<GameObjectBase, bool> IsOnFunc { get; set; }
+        internal uint Priority => (uint)PriorityCounter.Value;
         internal bool ShowOnHUD { get; set; } 
+        internal Tab MainTab { get; set; }
+        internal Group MainGroup { get; set; }
+        internal Switch IsOnSwitch { get; set; } = new Switch("Draw Damage", true);
+        internal ModeDisplay ColorDisplay { get; set; }
+        internal Counter PriorityCounter { get; set; }
+        internal Switch ShowName { get; set; } = new Switch("Show Name", true);
 
         internal DamageCalculation Calculator { get; }
+
+        internal string GetName()
+        {
+            if (ShowName.IsOn)
+            {
+                return OrigName;
+            }
+            return "";
+        }
+
+        internal Color GetColor()
+        {
+            return ColorConverter.GetColor(ColorDisplay.SelectedModeName);
+        }
 
         internal float GetDamage(GameObjectBase target)
         {
             return Calculator.CalculateDamage(target);
         }
 
-        internal void UpdatePriority(uint priority)
+        public Damage(Tab tab, Group group, string name, uint priority, DamageCalculation calculator, Color color, bool showOnHUD = false)
         {
-            this.Priority = priority;
-            return;
-        }
-
-        internal void UpdateColor(Color color)
-        {
-            this.Color = color;
-            return;
-        }
-
-        internal void UpdateName(string name)
-        {
-            this.Name = name;
-            return;
-        }
-
-        public Damage(string name, uint priority, DamageCalculation calculator, Color color, bool showOnHUD = false)
-        {
-            this.Name = name;
-            this.Priority = priority;
-            this.Calculator = calculator;
-            this.Color = color;
+            OrigName = name;
             this.ShowOnHUD = showOnHUD;
+            this.MainGroup = group;
+            this.MainTab = tab;
+            IsOnFunc = (x => x.IsAlive);
+            ColorDisplay = new ModeDisplay("Color", color);
+            PriorityCounter = new Counter("Priority", (int)priority, 1, 10);
+            Calculator= calculator;
+            MainGroup.AddItem(IsOnSwitch);
+            MainGroup.AddItem(ColorDisplay);
+            MainGroup.AddItem(PriorityCounter);
+            MainGroup.AddItem(ShowName);
+        }
+
+        public Damage(Tab tab, Group group, string name, uint priority, DamageCalculation calculator, Color color, Func<GameObjectBase, bool> isOnFunc,bool showOnHUD = false)
+        {
+            OrigName = name;
+            this.ShowOnHUD = showOnHUD;
+            this.MainGroup = group;
+            this.MainTab = tab;
+            IsOnFunc = isOnFunc;
+            ColorDisplay = new ModeDisplay("Color", color);
+            PriorityCounter = new Counter("Priority", (int)priority, 1, 10);
+            Calculator = calculator;
+            MainGroup.AddItem(IsOnSwitch);
+            MainGroup.AddItem(ColorDisplay);
+            MainGroup.AddItem(PriorityCounter);
+            MainGroup.AddItem(ShowName);
         }
     }
 

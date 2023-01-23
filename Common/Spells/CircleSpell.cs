@@ -18,12 +18,53 @@ using Oasys.SDK.Tools;
 namespace SyncWave.Common.Spells
 {
 
-    internal class CircleSpell : SpellCastBase
+    internal sealed class CircleSpell : SpellCastBase
     {
         internal int Width { get; set; }
         internal Prediction? Prediction;
         internal ModeDisplay HitChance { get; set; }
         internal float castTime;
+
+        public CircleSpell(Tab mainTab, Group group, CastSlot castSlot, SpellSlot spellSlot, bool enabled, DamageCalculation effectCalculator, int range, int radius, float CastTime = 0, int minMana = 0, bool canKill = false, bool harass = false, bool laneclear = false, bool lasthit = false)
+        {
+            castTime = CastTime;
+            MainTab = mainTab;
+            SpellGroup = group;
+            SpellSlot = spellSlot;
+            CastSlot = castSlot;
+            isOn = new Oasys.Common.Menu.ItemComponents.Switch("Enabled", enabled);
+            IsOn = x => x.IsAlive;
+            MinMana = new Counter("Min Mana", minMana, 0, 1000);
+            HitChance = new ModeDisplay() { Title = "Hitchance", ModeNames = new() { "Impossible", "Unknown", "OutOfRange", "Dashing", "Low", "Medium", "High", "VeryHigh", "Immobile" }, SelectedModeName = "VeryHigh" };
+            HarassIsOn = new Switch("Harass", false);
+            LaneclearIsOn = new Switch("Laneclear", false);
+            LasthitIsOn = new Switch("Lasthit", false);
+            CanKill = canKill;
+            Range = range;
+            Width = radius;
+            TargetSelector = x => x.IsAlive && x.Distance < Range;
+            EffectCalculator = effectCalculator;
+            group.AddItem(isOn);
+            group.AddItem(MinMana);
+            group.AddItem(HitChance);
+            if (harass)
+            {
+                group.AddItem(HarassIsOn);
+                Harass = true;
+            }
+            if (lasthit)
+            {
+                group.AddItem(LasthitIsOn);
+                LastHit = true;
+            }
+            if (laneclear)
+            {
+                group.AddItem(LaneclearIsOn);
+                Push = true;
+            }
+            CoreEvents.OnCoreMainTick += MainTick;
+
+        }
 
         public CircleSpell(Tab mainTab, Group group, CastSlot castSlot, SpellSlot spellSlot, bool enabled, DamageCalculation effectCalculator, Func<GameObjectBase, bool> targetSelector, int range, int radius, float CastTime = 0, int minMana = 0, bool canKill = false, bool harass = false, bool laneclear = false, bool lasthit = false)
         {
@@ -32,7 +73,8 @@ namespace SyncWave.Common.Spells
             SpellGroup = group;
             SpellSlot = spellSlot;
             CastSlot = castSlot;
-            IsOn = new Oasys.Common.Menu.ItemComponents.Switch("Enabled", enabled);
+            isOn = new Oasys.Common.Menu.ItemComponents.Switch("Enabled", enabled);
+            IsOn = x => x.IsAlive;
             MinMana = new Counter("Min Mana", minMana, 0, 1000);
             HitChance = new ModeDisplay() { Title = "Hitchance", ModeNames = new() { "Impossible", "Unknown", "OutOfRange", "Dashing", "Low", "Medium", "High", "VeryHigh", "Immobile" }, SelectedModeName = "VeryHigh" };
             HarassIsOn = new Switch("Harass", false);
@@ -43,7 +85,48 @@ namespace SyncWave.Common.Spells
             Width = radius;
             TargetSelector = targetSelector;
             EffectCalculator = effectCalculator;
-            group.AddItem(IsOn);
+            group.AddItem(isOn);
+            group.AddItem(MinMana);
+            group.AddItem(HitChance);
+            if (harass)
+            {
+                group.AddItem(HarassIsOn);
+                Harass = true;
+            }
+            if (lasthit)
+            {
+                group.AddItem(LasthitIsOn);
+                LastHit = true;
+            }
+            if (laneclear)
+            {
+                group.AddItem(LaneclearIsOn);
+                Push = true;
+            }
+            CoreEvents.OnCoreMainTick += MainTick;
+
+        }
+
+        public CircleSpell(Tab mainTab, Group group, CastSlot castSlot, SpellSlot spellSlot, bool enabled, DamageCalculation effectCalculator, Func<GameObjectBase, bool> targetSelector, int range, int radius, Func<GameObjectBase, bool> isOnFunc, float CastTime = 0, int minMana = 0, bool canKill = false, bool harass = false, bool laneclear = false, bool lasthit = false)
+        {
+            castTime = CastTime;
+            MainTab = mainTab;
+            SpellGroup = group;
+            SpellSlot = spellSlot;
+            CastSlot = castSlot;
+            isOn = new Oasys.Common.Menu.ItemComponents.Switch("Enabled", enabled);
+            IsOn = isOnFunc;
+            MinMana = new Counter("Min Mana", minMana, 0, 1000);
+            HitChance = new ModeDisplay() { Title = "Hitchance", ModeNames = new() { "Impossible", "Unknown", "OutOfRange", "Dashing", "Low", "Medium", "High", "VeryHigh", "Immobile" }, SelectedModeName = "VeryHigh" };
+            HarassIsOn = new Switch("Harass", false);
+            LaneclearIsOn = new Switch("Laneclear", false);
+            LasthitIsOn = new Switch("Lasthit", false);
+            CanKill = canKill;
+            Range = range;
+            Width = radius;
+            TargetSelector = targetSelector;
+            EffectCalculator = effectCalculator;
+            group.AddItem(isOn);
             group.AddItem(MinMana);
             group.AddItem(HitChance);
             if (harass)
@@ -80,7 +163,7 @@ namespace SyncWave.Common.Spells
 
         internal Task MainTick()
         {
-            if (MainInput && IsOn.IsOn && !Initialized)
+            if (MainInput && isOn.IsOn && !Initialized)
             {
                 CoreEvents.OnCoreMainInputAsync += MainInputFunction;
                 Initialized = true;
@@ -105,10 +188,9 @@ namespace SyncWave.Common.Spells
 
         private Task LastHitInputFunction()
         {
-            if (!LasthitIsOn.IsOn || !IsOn.IsOn)
+            if (!LasthitIsOn.IsOn || !isOn.IsOn)
                 return Task.CompletedTask;
-            ObjectTypeFlag[] flags = new ObjectTypeFlag[] { ObjectTypeFlag.AIMinionClient };
-            foreach (GameObjectBase enemy in UnitManager.GetEnemies(flags))
+            foreach (GameObjectBase enemy in UnitManager.EnemyMinions)
             {
                 if (enemy.IsAlive && enemy.IsTargetable && enemy.IsValidTarget() && enemy.Distance < Range && this.SpellIsReady())
                 {
@@ -123,10 +205,9 @@ namespace SyncWave.Common.Spells
 
         private Task PushInputFunction()
         {
-            if (!LaneclearIsOn.IsOn || !IsOn.IsOn)
+            if (!LaneclearIsOn.IsOn || !isOn.IsOn)
                 return Task.CompletedTask;
-            ObjectTypeFlag[] flags = new ObjectTypeFlag[] { ObjectTypeFlag.AIMinionClient };
-            foreach (GameObjectBase enemy in UnitManager.GetEnemies(flags))
+            foreach (GameObjectBase enemy in UnitManager.EnemyMinions)
             {
                 if (enemy.IsAlive && enemy.IsTargetable && enemy.IsValidTarget() && enemy.Distance < Range && this.SpellIsReady())
                 {
@@ -141,8 +222,8 @@ namespace SyncWave.Common.Spells
 
         private Task HarassInputFunction()
         {
-            GameObjectBase? target = Oasys.Common.Logic.TargetSelector.GetBestHeroTarget(null, (x => x.Distance < Range));
-            if (target != null && HarassIsOn.IsOn && IsOn.IsOn)
+            GameObjectBase? target = Oasys.Common.Logic.TargetSelector.GetBestHeroTarget(null, TargetSelector);
+            if (target != null && HarassIsOn.IsOn && isOn.IsOn && IsOn(Env.Me()))
             {
 
                 if (Prediction == null)
@@ -177,8 +258,8 @@ namespace SyncWave.Common.Spells
 
         private Task MainInputFunction()
         {
-            GameObjectBase? target = Oasys.Common.Logic.TargetSelector.GetBestHeroTarget(null, (x => x.Distance < Range));
-            if (target != null && IsOn.IsOn)
+            GameObjectBase? target = Oasys.Common.Logic.TargetSelector.GetBestHeroTarget(null, TargetSelector);
+            if (target != null && isOn.IsOn && IsOn(Env.Me()))
             {
                 
                 if (Prediction == null)

@@ -357,16 +357,13 @@ namespace SyncWave.Champions
             EGroup.AddItem(DrawBarrels);
             qTargeted = new TargetedSpell(MainTab, QGroup, Oasys.SDK.SpellCasting.CastSlot.Q, Oasys.Common.Enums.GameEnums.SpellSlot.Q, true, QDamage, (x => x.IsAlive && x.IsObject(Oasys.Common.Enums.GameEnums.ObjectTypeFlag.AIHeroClient)), 625, 0.25F, 55, false, true, false, true);
             rCircle = new CircleSpell(MainTab, RGroup, CastSlot.R, SpellSlot.R, true, RDamage, (x => x.IsAlive && x.IsObject(Oasys.Common.Enums.GameEnums.ObjectTypeFlag.AIHeroClient)), 20000, 580, 0.25F, 100, true);
-            Damage qDamage = new Damage("Q", (uint)6, QDamage, SharpDX.Color.AliceBlue);
-            Damage rDamage = new Damage("R", (uint)4, RDamage, SharpDX.Color.Red);
+            Damage qDamage = new Damage(MainTab, QGroup, "Q", (uint)6, QDamage, SharpDX.Color.AliceBlue);
+            Damage rDamage = new Damage(MainTab, RGroup, "R", (uint)4, RDamage, SharpDX.Color.Red);
             Render.AddDamage(qDamage);
             Render.AddDamage(rDamage);
-            qDamage.IsOn = true;
-            rDamage.IsOn = true;
             GameEvents.OnCreateObject += ObjectInspector;
             CoreEvents.OnCoreMainInputAsync += MainInput;
             CoreEvents.OnCoreRender += BarrelDrawer;
-            rCircle.IsOn.IsOn = true;
         }
 
         private void BarrelDrawer()
@@ -392,8 +389,8 @@ namespace SyncWave.Champions
 
         private Task MainInput() 
         {
-            bool origIsOn = qTargeted.IsOn.IsOn;
-            qTargeted.IsOn.IsOn = false;
+            bool origIsOn = qTargeted.isOn.IsOn;
+            qTargeted.isOn.IsOn = false;
             GPBarrelPos BarrelObj = ExpGetBarrelPosition(null, null);
             if (BarrelObj.ValidBarrel && BarrelObj.ValidTarget && EEnabled
                 .IsOn)
@@ -418,7 +415,7 @@ namespace SyncWave.Champions
                     SpellCastProvider.CastSpell(CastSlot.W, 0.25F);
                 }
             }
-            qTargeted.IsOn.IsOn = origIsOn;
+            qTargeted.isOn.IsOn = origIsOn;
             return Task.CompletedTask;
         }
 

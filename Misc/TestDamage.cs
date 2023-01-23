@@ -13,6 +13,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Windows.Forms;
 
 namespace SyncWave.Misc
 {
@@ -37,12 +38,15 @@ namespace SyncWave.Misc
         {
             Tab Tab = new Tab("SyncWave - Test");
             TabIndex = MenuManagerProvider.AddTab(Tab);
-            OnIndex = Tab.AddItem(new Switch() { Title = "Enabled", IsOn = true });
-            ColorIndex = Tab.AddItem(new ModeDisplay() { Title = "Test Color", ModeNames = ColorConverter.GetColors(), SelectedModeName = "Red" });
-            AlphaIndex = Tab.AddItem(new Counter() { Title = "Test Alpha", Value = 200, ValueFrequency = 5, MinValue = 0, MaxValue = 255 });
-            PriorityIndex = Tab.AddItem(new Counter() { Title = "Test Prio", MaxValue = 10, MinValue = 1, Value = 2 });
-            DamageIndex = Tab.AddItem(new FloatCounter() { Title = "Damage", MaxValue = 20000, MinValue = 0, ValueFrequency = 10 });
+            Tab.AddGroup(TestGroup);
+            OnIndex = TestGroup.AddItem(new Switch() { Title = "Enabled", IsOn = true });
+            ColorIndex = TestGroup.AddItem(new ModeDisplay() { Title = "Test Color", ModeNames = ColorConverter.GetColors(), SelectedModeName = "Red" });
+            AlphaIndex = TestGroup.AddItem(new Counter() { Title = "Test Alpha", Value = 200, ValueFrequency = 5, MinValue = 0, MaxValue = 255 });
+            PriorityIndex = TestGroup.AddItem(new Counter() { Title = "Test Prio", MaxValue = 10, MinValue = 1, Value = 2 });
+            DamageIndex = TestGroup.AddItem(new FloatCounter() { Title = "Damage", MaxValue = 20000, MinValue = 0, ValueFrequency = 10 });
         }
+        internal static Group TestGroup = new Group("Test Damage");
+
         internal static bool On => MenuManager.GetTab(TabIndex).GetItem<Switch>(OnIndex).IsOn;
         internal static uint Prio => (uint)MenuManager.GetTab(TabIndex).GetItem<Counter>(PriorityIndex).Value;
         internal static float Damage => MenuManager.GetTab(TabIndex).GetItem<FloatCounter>(DamageIndex).Value;
@@ -54,17 +58,9 @@ namespace SyncWave.Misc
         internal static void Init()
         {
             SetupMenu();
-            CoreEvents.OnCoreRender += Draw;
             Render.Init();
-            Test = new Damage("T", Prio, new TestCalc(), ColorConverter.GetColorWithAlpha(Color, Alpha));
+            Test = new Damage(MenuManager.GetTab(TabIndex), TestGroup, "T", Prio, new TestCalc(), ColorConverter.GetColorWithAlpha(Color, Alpha));
             Render.AddDamage(Test);
-        }
-
-        internal static void Draw()
-        {
-            Test.IsOn = On;
-            Test.UpdateColor(ColorConverter.GetColorWithAlpha(Color, Alpha));
-            Test.UpdatePriority(Prio);
         }
     }
 }

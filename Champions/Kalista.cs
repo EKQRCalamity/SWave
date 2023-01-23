@@ -129,10 +129,9 @@ namespace SyncWave.Champions
             CoreEvents.OnCoreMainTick += OnCoreMainTick;
             CoreEvents.OnCoreMainInputAsync += OnCoreMainInput;
             CoreEvents.OnCoreLaneclearInputAsync += OnCoreLaneClear;
-            CoreEvents.OnCoreRender += OnCoreRender;
             Render.Init();
-            _QDamage = new Damage("Q", (uint)DrawQPrio.Value, QCalc, ColorConverter.GetColor(DrawQColor.SelectedModeName));
-            _EDamage = new Damage("E", (uint)DrawEPrio.Value, ECalc, ColorConverter.GetColor(DrawEColor.SelectedModeName));
+            _QDamage = new Damage(KalistaTab, QGroup, "Q", (uint)3, QCalc, Color.Blue);
+            _EDamage = new Damage(KalistaTab, EGroup, "E", (uint)4, ECalc, Color.Orange);
             Logger.Log("Kalista Initialized!");
             Common.Spells.AimSpell Q = new Common.Spells.AimSpell(QRange, KalistaTab, CastSlot.Q, SpellSlot.Q);
             Q.SetPrediction(Prediction.MenuSelected.PredictionType.Line, Champions.Kalista.QRange - 40, Champions.Kalista.QWidth, Champions.Kalista.QCastTime, Champions.Kalista.QSpeed, true);
@@ -151,11 +150,6 @@ namespace SyncWave.Champions
         internal static Switch QEnabled = new Switch("Enabled", true);
         internal static Switch QTransfer = new Switch("Can Transfer Spears", true);
         internal static ModeDisplay QHitChance = new ModeDisplay() { Title = "Q Hitchance", ModeNames = new() { "Impossible", "Unknown", "OutOfRange", "Dashing", "Low", "Medium", "High", "VeryHigh", "Immobile" }, SelectedModeName = "VeryHigh" };
-        internal static Switch DrawQ = new Switch("Draw Q Damage", true);
-        internal static ModeDisplay DrawQMode = new ModeDisplay() { Title = "Draw Mode", ModeNames = new() { "AboveHPBar", "AboveWithoutName", "OnHPBar" } };
-        internal static Counter DrawQPrio = new Counter("Draw Prio", 5, 1, 10);
-        internal static InfoDisplay QPrioInfo = new InfoDisplay() { Title = "Prio", Information = "Prio doesnt work for OnHPBar" };
-        internal static ModeDisplay DrawQColor = new ModeDisplay("Draw Color", Color.DodgerBlue);
         
         internal static Group WGroup = new Group("W Settings");
         internal static Switch WEnabled = new Switch("Enabled", true);
@@ -165,13 +159,8 @@ namespace SyncWave.Champions
         
         internal static Group EGroup = new Group("E Settings");
         internal static Switch EEnabled = new Switch("Enabled", true);
-        internal static Switch DrawE = new Switch("Draw E Damage", true);
         internal static Switch UseEInLanceclear = new Switch("Use E in Laneclear", true);
-        internal static ModeDisplay DrawEMode = new ModeDisplay() { Title = "Draw Mode", ModeNames = new() { "AboveHPBar", "AboveWithoutName", "OnHPBar" } };
-        internal static Counter DrawEPrio = new Counter("Draw Prio", 8, 1, 10);
-        internal static InfoDisplay EPrioInfo = new InfoDisplay() { Title = "Prio", Information = "Prio doesnt work for OnHPBar" };
-        internal static ModeDisplay DrawEColor = new ModeDisplay("Draw Color", Color.OrangeRed);
-        
+
         internal static Group RGroup = new Group("R Settings");
         internal static Switch REnabled = new Switch("Enabled", true);
         internal static Counter RAllyHPPercent = new Counter("Ally HP%", 25, 0, 100);
@@ -188,10 +177,6 @@ namespace SyncWave.Champions
             QGroup.AddItem(QEnabled);
             QGroup.AddItem(QTransfer);
             QGroup.AddItem(QHitChance);
-            QGroup.AddItem(DrawQ);
-            QGroup.AddItem(DrawQMode);
-            QGroup.AddItem(DrawQPrio);
-            QGroup.AddItem(DrawQColor);
 
             KalistaTab.AddGroup(WGroup);
             WGroup.AddItem(WEnabled);
@@ -202,9 +187,6 @@ namespace SyncWave.Champions
             KalistaTab.AddGroup(EGroup);
             EGroup.AddItem(EEnabled);
             EGroup.AddItem(UseEInLanceclear);
-            EGroup.AddItem(DrawEMode);
-            EGroup.AddItem(DrawEPrio);
-            EGroup.AddItem(DrawEColor);
 
             KalistaTab.AddGroup(RGroup);
             RGroup.AddItem(REnabled);
@@ -361,26 +343,6 @@ namespace SyncWave.Champions
                     Logger.Log($"Found bound ally: {BoundAlly.ModelName}");
             }
             #endregion
-            if (Env.ModuleVersion == Common.Enums.V.None)
-                Logger.Log("Updating Damages");
-            if (!DrawE.IsOn || DrawEMode.SelectedModeName == "OnHPBar")
-            {
-                _EDamage.IsOn = false;
-            }
-            else
-                _EDamage.IsOn = true;
-            if (!DrawQ.IsOn || DrawQMode.SelectedModeName == "OnHPBar")
-            {
-                _QDamage.IsOn = false;
-            }
-            else
-                _QDamage.IsOn = true;
-            _QDamage.UpdateName((DrawQMode.SelectedModeName == "AboveHPBar") ? "Q" : String.Empty);
-            _QDamage.UpdateColor(ColorConverter.GetColor(DrawQColor.SelectedModeName));
-            _QDamage.UpdatePriority((uint)DrawQPrio.Value);
-            _EDamage.UpdateName((DrawEMode.SelectedModeName == "AboveHPBar") ? "E" : String.Empty);
-            _EDamage.UpdateColor(ColorConverter.GetColor(DrawEColor.SelectedModeName));
-            _EDamage.UpdatePriority((uint)DrawEPrio.Value);
             return Task.CompletedTask;
         }
 
@@ -436,43 +398,6 @@ namespace SyncWave.Champions
                 TryCastE(false);
             #endregion
             return Task.CompletedTask;
-        }
-
-        internal void OnCoreRender()
-        {
-            if (!Enabled.IsOn)
-                return;
-            if (DrawE.IsOn || DrawQ.IsOn)
-            {
-                if (Env.ModuleVersion == Common.Enums.V.None)
-                    Logger.Log("In general Drawing");
-                ObjectTypeFlag[] flags = new ObjectTypeFlag[] { ObjectTypeFlag.AIHeroClient, ObjectTypeFlag.AIMinionClient, ObjectTypeFlag.NeutralCampClient };
-                List<GameObjectBase> targets = getEnemiesWithStacks(flags).deepCopy();
-                foreach (GameObjectBase target in targets)
-                {
-                    if (DrawE.IsOn && Env.ELevel >= 1)
-                    {
-                        if (DrawEMode.SelectedModeName == "OnHPBar")
-                        {
-                            RenderFactory.DrawHPBarDamage(target, ECalc.CalculateDamage(target));
-                        }
-
-                    }
-                }
-                targets = UnitManager.EnemyChampions.deepCopy().ToList<GameObjectBase>();
-                foreach (GameObjectBase target in targets)
-                {
-                    if (DrawQ.IsOn && Env.QLevel >= 1)
-                    {
-                        if (DrawQMode.SelectedModeName == "OnHPBar")
-                        {
-                            if (Env.ModuleVersion == Common.Enums.V.Preview)
-                                Logger.Log("Should Draw Q");
-                            RenderFactory.DrawHPBarDamage(target, QCalc.CalculateDamage(target));
-                        }
-                    }
-                }
-            }
         }
         #endregion
     }

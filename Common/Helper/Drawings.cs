@@ -162,6 +162,10 @@ namespace SyncWave.Common.Helper
 
         internal static void DrawMultiDamage(GameObjectBase target, List<Damage> damageList)
         {
+            if (target != null)
+                Logger.Log($"Target given: {target.ModelName}");
+            if (target == null)
+                throw new Exception("Null target given.");
             if (damageList.Count == 0) return;
             damageList = damageList.OrderByDescending(x => x.Priority).ToList();
 
@@ -172,7 +176,9 @@ namespace SyncWave.Common.Helper
             List<string> names = new();
             for (int i = 0; i < damageList.Count; i++)
             {
-                float prioDamage = damageList[i].GetDamage(target);
+                Damage damage = damageList[i];
+                Logger.Log(damage.Name);
+                float prioDamage = damage.GetDamage(target);
                 float tempPrioDamage = prioDamage;
                 tempHealth -= prioDamage;
                 float tempFullDamage = (target.Health - tempHealth);
@@ -181,7 +187,7 @@ namespace SyncWave.Common.Helper
                 if ((tempHealth) >= -(prioDamage))
                 {
                     actualDmgList.Add(damageList[i]);
-                    Damage damage = damageList[i];
+                    
                     damages.Add(damage.GetDamage(target));
                     colors.Add(damage.Color);
                     if (tempPrioDamage / target.MaxHealth * 100 <= Render.Threshold && Env.ModuleVersion == Enums.V.InTesting)
@@ -191,7 +197,8 @@ namespace SyncWave.Common.Helper
                     {
                         Logger.Log($"Added: {damageList[i].Name}.");
                     }
-                } else
+                }
+                else
                 {
                     if (Env.ModuleVersion == Enums.V.InTesting)
                     {
@@ -200,7 +207,6 @@ namespace SyncWave.Common.Helper
                     break;
                 }
             }
-
             actualDmgList = actualDmgList.OrderByDescending(x => x.Priority).ToList();
             if (damages.Count != colors.Count || damages.Count != names.Count)
                 return;
@@ -217,6 +223,7 @@ namespace SyncWave.Common.Helper
                 DrawDamageAboveHP(target, fullDamage, colors[index], 1, false, names[index]);
                 fullDamage -= damages[index];
             }
+            
         }
 
         internal static void DrawDamageAboveHP(GameObjectBase target, float damage, Color color, uint position = 1, bool line = false, string name = "")

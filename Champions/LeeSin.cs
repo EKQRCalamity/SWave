@@ -106,26 +106,13 @@ namespace SyncWave.Champions
         internal static Group QGroup = new Group("Q Settings");
         internal static Switch QEnabled = new Switch("Enabled", true);
         internal static ModeDisplay QHitChance = new ModeDisplay() { Title = "Q Hitchance", ModeNames = new() { "Impossible", "Unknown", "OutOfRange", "Dashing", "Low", "Medium", "High", "VeryHigh", "Immobile" }, SelectedModeName = "VeryHigh" };
-        internal static Switch QDraw = new Switch("Draw Q Damage", true);
-        internal static Switch QDrawDepends = new Switch("Draw only when in range", false);
-        internal static ModeDisplay QModes = new ModeDisplay() { Title = "Drawing Mode", ModeNames = new() { "AboveHPBar", "AboveHPBarNoName" }, SelectedModeName = "AboveHPBar" };
-        internal static Counter QPrio = new Counter("Draw Prio", 7, 1, 10);
-        internal static ModeDisplay QColor = new ModeDisplay("Draw Color", Color.Green);
 
         internal static Group EGroup = new Group("E Settings");
         internal static Switch EEnabled = new Switch("Enabled", true);
         internal static Counter ERangeOffset = new Counter("Radius Offset", 0, -300, 300);
-        internal static Switch EDraw = new Switch("Draw E Damage", true);
-        internal static ModeDisplay EModes = new ModeDisplay() { Title = "Drawing Mode", ModeNames = new() { "AboveHPBar", "AboveHPBarNoName" }, SelectedModeName = "AboveHPBar" };
-        internal static Counter EPrio = new Counter("Draw Prio", 5, 1, 10);
-        internal static ModeDisplay EColor = new ModeDisplay("Draw Color", Color.Orange);
 
         internal static Group RGroup = new Group("R Settings");
         internal static Switch REnabled = new Switch("Enabled", true);
-        internal static Switch RDraw = new Switch("Draw R Damage", true);
-        internal static ModeDisplay RModes = new ModeDisplay() { Title = "Drawing Mode", ModeNames = new() { "AboveHPBar", "AboveHPBarNoName" }, SelectedModeName = "AboveHPBar" };
-        internal static Counter RPrio = new Counter("Draw Prio", 4, 1, 10);
-        internal static ModeDisplay RColor = new ModeDisplay("Draw Color", Color.Blue);
         internal static InfoDisplay RInfo = new() { Information = "Will be used when can kill." };
         
         private void InitMenu()
@@ -135,26 +122,13 @@ namespace SyncWave.Champions
             LeeSinTab.AddGroup(QGroup);
             QGroup.AddItem(QEnabled);
             QGroup.AddItem(QHitChance);
-            QGroup.AddItem(QDraw);
-            QGroup.AddItem(QDrawDepends);
-            QGroup.AddItem(QModes);
-            QGroup.AddItem(QPrio);
-            QGroup.AddItem(QColor);
 
             LeeSinTab.AddGroup(EGroup);
             EGroup.AddItem(EEnabled);
             EGroup.AddItem(ERangeOffset);
-            EGroup.AddItem(EDraw);
-            EGroup.AddItem(EModes);
-            EGroup.AddItem(EPrio);
-            EGroup.AddItem(EColor);
 
             LeeSinTab.AddGroup(RGroup);
             RGroup.AddItem(REnabled);
-            RGroup.AddItem(RDraw);
-            RGroup.AddItem(RModes);
-            RGroup.AddItem(RPrio);
-            RGroup.AddItem(RColor);
             RGroup.AddItem(RInfo);
         }
         #endregion
@@ -163,13 +137,11 @@ namespace SyncWave.Champions
         {
             Logger.Log("LeeSin Initializing...");
             InitMenu();
-            CoreEvents.OnCoreMainTick += MainTick;
             CoreEvents.OnCoreMainInputAsync += MainInput;
-            CoreEvents.OnCoreRender += CoreRender;
             Render.Init();
-            _QDamage = new Damage("Q", (uint)QPrio.Value, QCalc, ColorConverter.GetColor(QColor.SelectedModeName));
-            _EDamage = new Damage("E", (uint)EPrio.Value, ECalc, ColorConverter.GetColor(EColor.SelectedModeName));
-            _RDamage = new Damage("R", (uint)RPrio.Value, RCalc, ColorConverter.GetColor(RColor.SelectedModeName));
+            _QDamage = new Damage(LeeSinTab, QGroup, "Q", (uint)7, QCalc, Color.Green);
+            _EDamage = new Damage(LeeSinTab, EGroup, "E", (uint)5, ECalc, Color.Orange);
+            _RDamage = new Damage(LeeSinTab, RGroup, "R", (uint)4, RCalc, Color.Blue);
             Logger.Log("LeeSin Initialized!");
             Common.Spells.AimSpell Q = new(QRange, LeeSinTab, CastSlot.Q, Oasys.Common.Enums.GameEnums.SpellSlot.Q);
             Q.SetPrediction(Prediction.MenuSelected.PredictionType.Line, QRange, QWidth, QCastTime, QSpeed, true);
@@ -246,38 +218,6 @@ namespace SyncWave.Champions
         #endregion
 
         #region Events
-        private void CoreRender()
-        {
-            if (QDraw.IsOn || EDraw.IsOn || RDraw.IsOn)
-            {
-                List<Hero> enemies = UnitManager.EnemyChampions.deepCopy();
-                foreach (Hero enemy in enemies)
-                {
-                    if (enemy == null || !enemy.IsAlive || !enemy.IsTargetable) continue;
-                    if (QDraw.IsOn)
-                    {
-                        bool drawQ = (QDrawDepends.IsOn) ? enemy.Distance < QRange : true;
-                        if (!Render.HasDamage(_QDamage))
-                            Render.AddDamage(_QDamage);
-                        _QDamage.IsOn = drawQ;
-                    }
-                    if (EDraw.IsOn)
-                    {
-                        if (!Render.HasDamage(_EDamage))
-                            Render.AddDamage(_EDamage);
-                        if (!_EDamage.IsOn)
-                            _EDamage.IsOn = true;
-                    }
-                    if (RDraw.IsOn)
-                    {
-                        if (!Render.HasDamage(_RDamage))
-                            Render.AddDamage(_RDamage);
-                        if (!_RDamage.IsOn)
-                            _RDamage.IsOn = true;
-                    }
-                }
-            }
-        }
 
         private static Task MainInput()
         {
@@ -296,23 +236,6 @@ namespace SyncWave.Champions
             {
                 TryCastR(rtarget);
             }
-            return Task.CompletedTask;
-        }
-
-        private Task MainTick()
-        {
-            _QDamage.IsOn = QDraw.IsOn;
-            _EDamage.IsOn = EDraw.IsOn;
-            _RDamage.IsOn = RDraw.IsOn;
-            _QDamage.UpdateName((QModes.SelectedModeName == "AboveHPBar") ? "Q" : String.Empty);
-            _QDamage.UpdateColor(ColorConverter.GetColor(QColor.SelectedModeName));
-            _QDamage.UpdatePriority((uint)QPrio.Value);
-            _EDamage.UpdateName((EModes.SelectedModeName == "AboveHPBar") ? "W" : String.Empty);
-            _EDamage.UpdateColor(ColorConverter.GetColor(EColor.SelectedModeName));
-            _EDamage.UpdatePriority((uint)EPrio.Value);
-            _RDamage.UpdateName((RModes.SelectedModeName == "AboveHPBar") ? "R" : String.Empty);
-            _RDamage.UpdateColor(ColorConverter.GetColor(RColor.SelectedModeName));
-            _RDamage.UpdatePriority((uint)RPrio.Value);
             return Task.CompletedTask;
         }
         #endregion

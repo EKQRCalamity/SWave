@@ -110,26 +110,15 @@ namespace SyncWave.Champions
         internal static Group QGroup = new Group("Q Settings");
         internal static Switch QEnabled = new("Enabled", true);
         internal static ModeDisplay QHitChance = new ModeDisplay() { Title = "Q Hitchance", ModeNames = new() { "Impossible", "Unknown", "OutOfRange", "Dashing", "Low", "Medium", "High", "VeryHigh", "Immobile" }, SelectedModeName = "VeryHigh" };
-        internal static Switch QDraw = new Switch("Draw Q Damage", true);
-        internal static ModeDisplay QModes = new ModeDisplay() { Title = "Drawing Mode", ModeNames = new() { "AboveHPBar", "AboveHPBarNoName" }, SelectedModeName = "AboveHPBar" };
-        internal static Counter QPrio = new Counter("Draw Prio", 7, 1, 10);
-        internal static ModeDisplay QColor = new ModeDisplay("Draw Color", Color.Green);
 
         internal static Group EGroup = new Group("E Settings");
         internal static Switch EEnabled = new("Enabled", true);
         internal static Switch EDraw = new Switch("Draw E Damage", true);
-        internal static ModeDisplay EModes = new ModeDisplay() { Title = "Drawing Mode", ModeNames = new() { "AboveHPBar", "AboveHPBarNoName" }, SelectedModeName = "AboveHPBar" };
-        internal static Counter EPrio = new Counter("Draw Prio", 5, 1, 10);
-        internal static ModeDisplay EColor = new ModeDisplay("Draw Color", Color.Green);
 
         internal static Group RGroup = new Group("R Settings");
         internal static Switch REnabled = new("Enabled", true);
         internal static Switch ROnKill = new("Use OnKill", true);
         internal static Counter REnemies = new("Enemies Hit", 2, 0, 5);
-        internal static Switch RDraw = new Switch("Draw E Damage", true);
-        internal static ModeDisplay RModes = new ModeDisplay() { Title = "Drawing Mode", ModeNames = new() { "AboveHPBar", "AboveHPBarNoName" }, SelectedModeName = "AboveHPBar" };
-        internal static Counter RPrio = new Counter("Draw Prio", 5, 1, 10);
-        internal static ModeDisplay RColor = new ModeDisplay("Draw Color", Color.Green);
 
         internal static void InitMenu()
         {
@@ -138,39 +127,27 @@ namespace SyncWave.Champions
             BlitzTab.AddGroup(QGroup);
             QGroup.AddItem(QEnabled);
             QGroup.AddItem(QHitChance);
-            QGroup.AddItem(QDraw);
-            QGroup.AddItem(QModes);
-            QGroup.AddItem(QPrio);
-            QGroup.AddItem(QColor);
 
             BlitzTab.AddGroup(EGroup);
             EGroup.AddItem(EEnabled);
             EGroup.AddItem(EDraw);
-            EGroup.AddItem(EModes);
-            EGroup.AddItem(EPrio);
-            EGroup.AddItem(EColor);
 
             BlitzTab.AddGroup(RGroup);
             RGroup.AddItem(REnabled);
             RGroup.AddItem(ROnKill);
             RGroup.AddItem(REnemies);
-            RGroup.AddItem(RDraw);
-            RGroup.AddItem(RModes);
-            RGroup.AddItem(RPrio);
-            RGroup.AddItem(RColor);
         }
 
         internal override void Init()
         {
             Logger.Log("Blitz Initializing...");
             InitMenu();
-            CoreEvents.OnCoreMainTick += MainTick;
             CoreEvents.OnCoreMainInputAsync += MainInput;
             Orbwalker.OnOrbwalkerBeforeBasicAttack += ECast;
             Render.Init();
-            _QDamage = new("Q", (uint)QPrio.Value, QCalc, Color.Green);
-            _EDamage = new("E", (uint)EPrio.Value, ECalc, Color.Red);
-            _RDamage = new("R", (uint)RPrio.Value, RCalc, Color.Orange);
+            _QDamage = new(BlitzTab, QGroup, "Q", (uint)6, QCalc, Color.Green);
+            _EDamage = new(BlitzTab, EGroup, "E", (uint)5, ECalc, Color.Red);
+            _RDamage = new(BlitzTab, RGroup, "R", (uint)4, RCalc, Color.Orange);
             Render.AddDamage(_QDamage);
             Render.AddDamage(_EDamage);
             Render.AddDamage(_RDamage);
@@ -274,23 +251,6 @@ namespace SyncWave.Champions
             {
                 TryCastR2();
             }
-            return Task.CompletedTask;
-        }
-
-        internal static Task MainTick()
-        {
-            _QDamage.IsOn = QDraw.IsOn && Env.QLevel >= 1;
-            _QDamage.UpdateName((QModes.SelectedModeName == "AboveHPBar") ? "Q" : String.Empty);
-            _QDamage.UpdateColor(ColorConverter.GetColor(QColor.SelectedModeName));
-            _QDamage.UpdatePriority((uint)QPrio.Value);
-            _EDamage.IsOn = EDraw.IsOn && Env.ELevel >= 1;
-            _EDamage.UpdateName((EModes.SelectedModeName == "AboveHPBar") ? "E" : String.Empty);
-            _EDamage.UpdateColor(ColorConverter.GetColor(EColor.SelectedModeName));
-            _EDamage.UpdatePriority((uint)EPrio.Value);
-            _RDamage.IsOn = RDraw.IsOn && Env.RLevel >= 1;
-            _RDamage.UpdateName((RModes.SelectedModeName == "AboveHPBar") ? "R" : String.Empty);
-            _RDamage.UpdateColor(ColorConverter.GetColor(RColor.SelectedModeName));
-            _RDamage.UpdatePriority((uint)RPrio.Value);
             return Task.CompletedTask;
         }
     }

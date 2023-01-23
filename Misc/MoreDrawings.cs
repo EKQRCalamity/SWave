@@ -126,15 +126,12 @@ namespace SyncWave.Misc
             CoreEvents.OnCoreRender += Draw;
             CoreEvents.OnCoreMainTick += MainTick;
             Render.Init();
-            GaleforceDamage = new Damage("GF", 3, new GaleforceCalc(), ColorConverter.GetColorWithAlpha(DrawGaleforceColor, DrawGaleforceAlpha));
+            GaleforceDamage = new Damage(Menu.tab, Menu.tab.GetGroup(GroupIndex), "GF", 3, new GaleforceCalc(), ColorConverter.GetColorWithAlpha(DrawGaleforceColor, DrawGaleforceAlpha), (x => x.IsAlive && HasGaleforce()));
             Render.AddDamage(GaleforceDamage);
         }
 
         internal Task MainTick()
         {
-            GaleforceDamage.UpdateColor(ColorConverter.GetColorWithAlpha(DrawGaleforceColor, DrawGaleforceAlpha));
-            GaleforceDamage.UpdatePriority((uint)DrawGaleforcePrio);
-            GaleforceDamage.UpdateName((DrawGaleforceMode == "AboveHPBar") ? "" : "GF");
             return Task.CompletedTask;
         }
 
@@ -175,14 +172,6 @@ namespace SyncWave.Misc
                 {
                     Drawings.DrawExecuteBar(target, (target.MaxHealth * 0.0495F), DrawCollectorColor, DrawCollectorMode == "Line", DrawCollectorYOffset);
                 }
-                if (GaleforceDamage == null)
-                    return;
-                if (HasGaleforce() && DrawGaleforceDamage)
-                {
-                    GaleforceDamage.IsOn = true;
-                    return;
-                }
-                GaleforceDamage.IsOn = false;
             }
         }
     }

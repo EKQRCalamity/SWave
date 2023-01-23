@@ -236,9 +236,9 @@ namespace SyncWave.Champions
             CoreEvents.OnCoreMainTick += OnCoreMainTick;
             CoreEvents.OnCoreMainInputAsync += OnCoreMainInput;
             Render.Init();
-            _QDamage = new Damage("Q", 8, QCalc, ColorConverter.GetColor(DrawQColor.SelectedModeName));
-            _WDamage = new Damage("W", 6, WCalc, ColorConverter.GetColor(DrawWColor.SelectedModeName));
-            _EDamage = new Damage("E", 4, ECalc, ColorConverter.GetColor(DrawEColor.SelectedModeName));
+            _QDamage = new Damage(NidTab, QGroup, "Q", 8, QCalc, ColorConverter.GetColor(DrawQColor.SelectedModeName));
+            _WDamage = new Damage(NidTab, WGroup, "W", 6, WCalc, ColorConverter.GetColor(DrawWColor.SelectedModeName));
+            _EDamage = new Damage(NidTab, EGroup, "E", 4, ECalc, ColorConverter.GetColor(DrawEColor.SelectedModeName));
             CoreEvents.OnCoreRender += OnCoreRender;
             Logger.Log("Nidalee initialized!");
             
@@ -420,18 +420,6 @@ namespace SyncWave.Champions
             CougarE.IsOn = IsTransformed();
 
             MainTick += 1;
-            _QDamage.IsOn = SpearDraw.IsOn;
-            _WDamage.IsOn = WDraw.IsOn;
-            _EDamage.IsOn = EDraw.IsOn;
-            _QDamage.UpdateName((DrawQMode.SelectedModeName == "AboveHPBar") ? "Q" : String.Empty);
-            _QDamage.UpdateColor(ColorConverter.GetColor(DrawQColor.SelectedModeName));
-            _QDamage.UpdatePriority((uint)DrawQPrio.Value);
-            _WDamage.UpdateName((DrawWMode.SelectedModeName == "AboveHPBar") ? "W" : String.Empty);
-            _WDamage.UpdateColor(ColorConverter.GetColor(DrawWColor.SelectedModeName));
-            _WDamage.UpdatePriority((uint)DrawWPrio.Value);
-            _EDamage.UpdateName((DrawEMode.SelectedModeName == "AboveHPBar") ? "E" : String.Empty);
-            _EDamage.UpdateColor(ColorConverter.GetColor(DrawEColor.SelectedModeName));
-            _EDamage.UpdatePriority((uint)DrawEPrio.Value);
             return Task.CompletedTask;
         }
 
@@ -446,35 +434,6 @@ namespace SyncWave.Champions
 
         private void OnCoreRender()
         {
-            if (SpearDraw.IsOn || WDraw.IsOn || EDraw.IsOn)
-            {
-                List<Hero> enemies = UnitManager.EnemyChampions.deepCopy();
-                foreach (Hero enemy in enemies)
-                {
-                    if (enemy == null || !enemy.IsAlive || !enemy.IsTargetable || !enemy.IsVisible) continue;
-                    if (SpearDraw.IsOn && Env.QLevel >= 1)
-                    {
-                        if (!Render.HasDamage(_QDamage))
-                            Render.AddDamage(_QDamage);
-                        if (!_QDamage.IsOn)
-                            _QDamage.IsOn = true;
-                    }
-                    if (WDraw.IsOn && Env.WLevel >= 1)
-                    {
-                        if (!Render.HasDamage(_WDamage))
-                            Render.AddDamage(_WDamage);
-                        if (!_WDamage.IsOn)
-                            _WDamage.IsOn = true;
-                    }
-                    if (EDraw.IsOn && Env.ELevel >= 1)
-                    {
-                        if (!Render.HasDamage(_EDamage))
-                            Render.AddDamage(_EDamage);
-                        if (!_EDamage.IsOn)
-                            _EDamage.IsOn = true;
-                    }
-                }
-            }
             List<Hero> allies = UnitManager.AllyChampions.deepCopy();
             foreach (Hero ally in allies)
             {

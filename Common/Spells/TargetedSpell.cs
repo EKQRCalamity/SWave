@@ -17,26 +17,28 @@ using System.Threading.Tasks;
 
 namespace SyncWave.Common.Spells
 {
-    internal class TargetedSpell : SpellCastBase
+    internal sealed class TargetedSpell : SpellCastBase
     {
         internal float castTime;
 
-        public TargetedSpell(Tab mainTab, Group group, CastSlot castSlot, SpellSlot spellSlot, bool enabled, DamageCalculation effectCalculator, Func<GameObjectBase, bool> targetSelector, int range, float CastTime = 0,int minMana = 0, bool canKill = false, bool harass = false, bool laneclear = false, bool lasthit = false)
+        public TargetedSpell(Tab mainTab, Group group, CastSlot castSlot, SpellSlot spellSlot, bool enabled, DamageCalculation effectCalculator, int range, float CastTime = 0,int minMana = 0, bool canKill = false, bool harass = false, bool laneclear = false, bool lasthit = false)
         {
             castTime = CastTime;
+            EffectCalculator = effectCalculator;
             MainTab = mainTab;
             SpellGroup= group;
             SpellSlot= spellSlot;
             CastSlot= castSlot;
-            IsOn = new Oasys.Common.Menu.ItemComponents.Switch("Enabled", enabled);
+            isOn = new Oasys.Common.Menu.ItemComponents.Switch("Enabled", enabled);
+            IsOn = x => x.IsAlive;
             MinMana = new Counter("Min Mana", minMana, 0, 1000);
             HarassIsOn = new Switch("Harass", false);
             LaneclearIsOn = new Switch("Laneclear", false);
             LasthitIsOn = new Switch("Lasthit", false);
             CanKill = canKill;
             Range = range;
-            TargetSelector = targetSelector;
-            group.AddItem(IsOn);
+            TargetSelector = x => x.IsAlive && x.Distance < Range;
+            group.AddItem(isOn);
             group.AddItem(MinMana);
             if (harass)
             {
@@ -57,9 +59,85 @@ namespace SyncWave.Common.Spells
             
         }
 
+        public TargetedSpell(Tab mainTab, Group group, CastSlot castSlot, SpellSlot spellSlot, bool enabled, DamageCalculation effectCalculator, Func<GameObjectBase, bool> targetSelector, int range, float CastTime = 0, int minMana = 0, bool canKill = false, bool harass = false, bool laneclear = false, bool lasthit = false)
+        {
+            castTime = CastTime;
+            EffectCalculator = effectCalculator;
+            MainTab = mainTab;
+            SpellGroup = group;
+            SpellSlot = spellSlot;
+            CastSlot = castSlot;
+            isOn = new Oasys.Common.Menu.ItemComponents.Switch("Enabled", enabled);
+            IsOn = x => x.IsAlive;
+            MinMana = new Counter("Min Mana", minMana, 0, 1000);
+            HarassIsOn = new Switch("Harass", false);
+            LaneclearIsOn = new Switch("Laneclear", false);
+            LasthitIsOn = new Switch("Lasthit", false);
+            CanKill = canKill;
+            Range = range;
+            TargetSelector = targetSelector;
+            group.AddItem(isOn);
+            group.AddItem(MinMana);
+            if (harass)
+            {
+                group.AddItem(HarassIsOn);
+                Harass = true;
+            }
+            if (lasthit)
+            {
+                group.AddItem(LasthitIsOn);
+                LastHit = true;
+            }
+            if (laneclear)
+            {
+                group.AddItem(LaneclearIsOn);
+                Push = true;
+            }
+            CoreEvents.OnCoreMainTick += MainTick;
+
+        }
+
+        public TargetedSpell(Tab mainTab, Group group, CastSlot castSlot, SpellSlot spellSlot, bool enabled, DamageCalculation effectCalculator, Func<GameObjectBase, bool> targetSelector, int range, Func<GameObjectBase, bool> isOnFunc, float CastTime = 0, int minMana = 0, bool canKill = false, bool harass = false, bool laneclear = false, bool lasthit = false)
+        {
+            castTime = CastTime;
+            EffectCalculator = effectCalculator;
+            MainTab = mainTab;
+            SpellGroup = group;
+            SpellSlot = spellSlot;
+            CastSlot = castSlot;
+            isOn = new Oasys.Common.Menu.ItemComponents.Switch("Enabled", enabled);
+            IsOn = isOnFunc;
+            MinMana = new Counter("Min Mana", minMana, 0, 1000);
+            HarassIsOn = new Switch("Harass", false);
+            LaneclearIsOn = new Switch("Laneclear", false);
+            LasthitIsOn = new Switch("Lasthit", false);
+            CanKill = canKill;
+            Range = range;
+            TargetSelector = targetSelector;
+            group.AddItem(isOn);
+            group.AddItem(MinMana);
+            if (harass)
+            {
+                group.AddItem(HarassIsOn);
+                Harass = true;
+            }
+            if (lasthit)
+            {
+                group.AddItem(LasthitIsOn);
+                LastHit = true;
+            }
+            if (laneclear)
+            {
+                group.AddItem(LaneclearIsOn);
+                Push = true;
+            }
+            CoreEvents.OnCoreMainTick += MainTick;
+
+        }
+
         internal Task MainTick()
         {
-            if (MainInput && IsOn.IsOn && !Initialized)
+            if (MainInput && isOn.IsOn && !Initialized)
             {
                 CoreEvents.OnCoreMainInputAsync += MainInputFunction;
                 Initialized = true;
@@ -84,7 +162,7 @@ namespace SyncWave.Common.Spells
 
         private Task LastHitInputFunction()
         {
-            if (!LasthitIsOn.IsOn || !IsOn.IsOn)
+            if (!LasthitIsOn.IsOn || !isOn.IsOn || !IsOn(Env.Me()))
                 return Task.CompletedTask;
             foreach (GameObjectBase enemy in UnitManager.EnemyMinions)
             {
@@ -101,7 +179,7 @@ namespace SyncWave.Common.Spells
 
         private Task PushInputFunction()
         {
-            if (!LaneclearIsOn.IsOn || !IsOn.IsOn)
+            if (!LaneclearIsOn.IsOn || !isOn.IsOn || !IsOn(Env.Me()))
                 return Task.CompletedTask;
             foreach (GameObjectBase enemy in UnitManager.EnemyMinions)
             {
@@ -118,8 +196,8 @@ namespace SyncWave.Common.Spells
 
         private Task HarassInputFunction()
         {
-            GameObjectBase? target = Oasys.Common.Logic.TargetSelector.GetBestHeroTarget(null, (x => x.Distance < Range));
-            if (target != null && HarassIsOn.IsOn && IsOn.IsOn)
+            GameObjectBase? target = Oasys.Common.Logic.TargetSelector.GetBestHeroTarget(null, TargetSelector);
+            if (target != null && HarassIsOn.IsOn && isOn.IsOn && IsOn(Env.Me()))
             {
                 if (target.IsAlive && target.IsTargetable && target.IsValidTarget() && target.IsObject(ObjectTypeFlag.AIHeroClient) && this.SpellIsReady())
                 {
@@ -132,8 +210,8 @@ namespace SyncWave.Common.Spells
 
         private Task MainInputFunction()
         {
-            GameObjectBase? target = Oasys.Common.Logic.TargetSelector.GetBestHeroTarget(null, (x => x.Distance < Range));
-            if (target != null && IsOn.IsOn)
+            GameObjectBase? target = Oasys.Common.Logic.TargetSelector.GetBestHeroTarget(null, TargetSelector);
+            if (target != null && isOn.IsOn && IsOn(Env.Me()))
             {
                 if (target.IsAlive && target.IsTargetable && target.IsValidTarget() && target.IsObject(ObjectTypeFlag.AIHeroClient) && this.SpellIsReady())
                 {

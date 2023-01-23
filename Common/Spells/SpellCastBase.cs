@@ -6,6 +6,7 @@ using Oasys.SDK.SpellCasting;
 using SyncWave.Base;
 using System;
 using System.Collections.Generic;
+using System.Configuration;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -16,13 +17,14 @@ namespace SyncWave.Common.Spells
     {
         internal CastSlot CastSlot { get; set; }
         internal SpellSlot SpellSlot { get; set; }
+        internal Func<GameObjectBase, bool> IsOn { get; set; }
         internal bool MainInput { get; set; } = true;
         internal bool Harass { get; set; } = false;
         internal bool LastHit { get; set; } = false;
         internal bool Push { get; set; } = false;
         internal Tab MainTab { get; set; }
         internal Group SpellGroup { get; set; }
-        internal Switch IsOn { get; set; }
+        internal Switch isOn { get; set; }
         internal Switch HarassIsOn { get; set; }
         internal Switch LaneclearIsOn { get; set; }
         internal Switch LasthitIsOn { get; set; }

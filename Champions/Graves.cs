@@ -141,13 +141,11 @@ namespace SyncWave.Champions
         {
             Logger.Log("Graves Initializing...");
             InitMenu();
-            CoreEvents.OnCoreMainTick += OnCoreMainTick;
             CoreEvents.OnCoreMainInputAsync += OnCoreMainInput;
-            CoreEvents.OnCoreRender += OnCoreRender;
             Render.Init();
-            _QDamage = new Damage("Q", (uint)QPrio.Value, QCalc, ColorConverter.GetColor(QColor.SelectedModeName));
-            _WDamage = new Damage("W", (uint)WPrio.Value, WCalc, ColorConverter.GetColor(WColor.SelectedModeName));
-            _RDamage = new Damage("R", (uint)RPrio.Value, RCalc, ColorConverter.GetColor(RColor.SelectedModeName));
+            _QDamage = new Damage(GravesTab, QGroup, "Q", (uint)QPrio.Value, QCalc, ColorConverter.GetColor(QColor.SelectedModeName));
+            _WDamage = new Damage(GravesTab, WGroup, "W", (uint)WPrio.Value, WCalc, ColorConverter.GetColor(WColor.SelectedModeName));
+            _RDamage = new Damage(GravesTab, RGroup, "R", (uint)RPrio.Value, RCalc, ColorConverter.GetColor(RColor.SelectedModeName));
             Logger.Log("Graves Initialized!");
             SyncWave.Common.Spells.AimSpell q = new Common.Spells.AimSpell(QRange, GravesTab, CastSlot.Q, Oasys.Common.Enums.GameEnums.SpellSlot.Q);
             q.SetPrediction(Prediction.MenuSelected.PredictionType.Line, QRange, QShellWidth, QCastTime, QSpeed, true);
@@ -308,26 +306,6 @@ namespace SyncWave.Champions
 
         #region Events
 
-        internal Task OnCoreMainTick()
-        {
-            if (!QDraw.IsOn)
-                _QDamage.IsOn = false;
-            if (!WDraw.IsOn)
-                _WDamage.IsOn = false;
-            if (!RDraw.IsOn)
-                _RDamage.IsOn = false;
-            _QDamage.UpdateName((QModes.SelectedModeName == "AboveHPBar") ? "Q" : String.Empty);
-            _QDamage.UpdateColor(ColorConverter.GetColor(QColor.SelectedModeName));
-            _QDamage.UpdatePriority((uint)QPrio.Value);
-            _WDamage.UpdateName((WModes.SelectedModeName == "AboveHPBar") ? "W" : String.Empty);
-            _WDamage.UpdateColor(ColorConverter.GetColor(WColor.SelectedModeName));
-            _WDamage.UpdatePriority((uint)WPrio.Value);
-            _RDamage.UpdateName((RModes.SelectedModeName == "AboveHPBar") ? "R" : String.Empty);
-            _RDamage.UpdateColor(ColorConverter.GetColor(RColor.SelectedModeName));
-            _RDamage.UpdatePriority((uint)RPrio.Value);
-            return Task.CompletedTask;
-        }
-
         internal Task OnCoreMainInput()
         {
             GameObjectBase target = Oasys.Common.Logic.TargetSelector.GetBestHeroTarget(null, x => x.Distance <= QRange - 40);
@@ -342,39 +320,6 @@ namespace SyncWave.Champions
                 TryCastR(rtarget);
             }
             return Task.CompletedTask;
-        }
-
-        internal void OnCoreRender()
-        {
-            if (QDraw.IsOn || WDraw.IsOn || RDraw.IsOn)
-            {
-                List<Hero> enemies = UnitManager.EnemyChampions.deepCopy();
-                foreach (Hero enemy in enemies)
-                {
-                    if (enemy == null || !enemy.IsAlive || !enemy.IsTargetable) continue;
-                    if (QDraw.IsOn)
-                    {
-                        if (!Render.HasDamage(_QDamage))
-                            Render.AddDamage(_QDamage);
-                        if (!_QDamage.IsOn)
-                            _QDamage.IsOn = true;
-                    }
-                    if (WDraw.IsOn)
-                    {
-                        if (!Render.HasDamage(_WDamage))
-                            Render.AddDamage(_WDamage);
-                        if (!_WDamage.IsOn)
-                            _WDamage.IsOn = true;
-                    }
-                    if (RDraw.IsOn)
-                    {
-                        if (!Render.HasDamage(_RDamage))
-                            Render.AddDamage(_RDamage);
-                        if (!_RDamage.IsOn)
-                            _RDamage.IsOn = true;
-                    }
-                }
-            }
         }
         #endregion
     }

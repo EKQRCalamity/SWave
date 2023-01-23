@@ -98,20 +98,17 @@ namespace SyncWave.Champions
             MainTab.AddGroup(QGroup);
             MainTab.AddGroup(WGroup);
             MainTab.AddGroup(EGroup);
-            qLine = new LineSpell(MainTab, QGroup, Oasys.SDK.SpellCasting.CastSlot.Q, Oasys.Common.Enums.GameEnums.SpellSlot.Q, true, QCalc, (x => x.IsAlive && x.IsObject(Oasys.Common.Enums.GameEnums.ObjectTypeFlag.AIHeroClient)), QRange, QWidth, QCastTime, 50, false, true, false, false, true, 0);
-            wCircle = new CircleSpell(MainTab, WGroup, Oasys.SDK.SpellCasting.CastSlot.W, Oasys.Common.Enums.GameEnums.SpellSlot.W, true, WCalc, (x => x.IsAlive && x.IsObject(Oasys.Common.Enums.GameEnums.ObjectTypeFlag.AIHeroClient)), WRange, WRadius, WCastTime, 100, false, true);
-            eTargeted = new TargetedSpell(MainTab, EGroup, Oasys.SDK.SpellCasting.CastSlot.E, Oasys.Common.Enums.GameEnums.SpellSlot.E, true, ECalc, (x => x.IsAlive && x.IsObject(Oasys.Common.Enums.GameEnums.ObjectTypeFlag.AIHeroClient)), ERange, ECastTime, 90);
+            qLine = new LineSpell(MainTab, QGroup, Oasys.SDK.SpellCasting.CastSlot.Q, Oasys.Common.Enums.GameEnums.SpellSlot.Q, true, QCalc, (x => x.IsAlive && x.IsObject(Oasys.Common.Enums.GameEnums.ObjectTypeFlag.AIHeroClient) && x.Distance < QRange), QRange, QWidth, QCastTime, 50, false, true, false, false, true, 0);
+            wCircle = new CircleSpell(MainTab, WGroup, Oasys.SDK.SpellCasting.CastSlot.W, Oasys.Common.Enums.GameEnums.SpellSlot.W, true, WCalc, (x => x.IsAlive && x.IsObject(Oasys.Common.Enums.GameEnums.ObjectTypeFlag.AIHeroClient) && x.Distance < WRange), WRange, WRadius, WCastTime, 100, false, true);
+            eTargeted = new TargetedSpell(MainTab, EGroup, Oasys.SDK.SpellCasting.CastSlot.E, Oasys.Common.Enums.GameEnums.SpellSlot.E, true, ECalc, (x => x.IsAlive && x.IsObject(Oasys.Common.Enums.GameEnums.ObjectTypeFlag.AIHeroClient) && x.Distance < ERange), ERange, ECastTime, 90);
             qLine.SetPrediction(QCastTime, 1600, true);
             wCircle.SetPrediction(0.627F, 10000, false);
-            Damage qDamage = new Damage("Q", (uint)4, QCalc, SharpDX.Color.AliceBlue);
-            Damage wDamage = new Damage("W", (uint)5, WCalc, SharpDX.Color.Aquamarine);
-            Damage eDamage = new Damage("E", (uint)6, ECalc, SharpDX.Color.Blue);
+            Damage qDamage = new Damage(MainTab, QGroup, "Q", (uint)4, QCalc, SharpDX.Color.AliceBlue);
+            Damage wDamage = new Damage(MainTab, WGroup, "W", (uint)5, WCalc, SharpDX.Color.Aquamarine);
+            Damage eDamage = new Damage(MainTab, EGroup, "E", (uint)6, ECalc, SharpDX.Color.Blue);
             Render.AddDamage(qDamage);
             Render.AddDamage(wDamage);
             Render.AddDamage(eDamage);
-            qDamage.IsOn = true;
-            wDamage.IsOn = true;
-            eDamage.IsOn = true;
             CoreEvents.OnCoreMainTick += MainTick;
         }
 
