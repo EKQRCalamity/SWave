@@ -189,7 +189,7 @@ namespace SyncWave.Champions
         #endregion
 
         #region Damage
-        internal static float PassiveExtraDamage => PassiveBonusDamageOnHit[Env.Me().Level] + (Env.Me().UnitStats.BonusAttackDamage * PassiveADScaling);
+        internal static float PassiveExtraDamage => PassiveBonusDamageOnHit[(Env.Me().Level >= 18) ? 18 : Env.Me().Level] + (Env.Me().UnitStats.BonusAttackDamage * PassiveADScaling);
         
         internal float GetQDamage(GameObjectBase target)
         {
@@ -197,7 +197,7 @@ namespace SyncWave.Champions
                 return 0;
             float physicalDamage = QDamage[Env.QLevel] + (Env.Me().UnitStats.TotalAttackDamage * QADScaling);
             if (target.IsObject(Oasys.Common.Enums.GameEnums.ObjectTypeFlag.AIMinionClient))
-                physicalDamage += QExtraMinionDamage[Env.Me().Level];
+                physicalDamage += QExtraMinionDamage[(Env.Me().Level >= 18)? 18 : Env.Me().Level];
             return DamageCalculator.CalculateActualDamage(Env.Me(), target, physicalDamage);
         }
 
