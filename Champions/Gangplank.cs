@@ -241,10 +241,6 @@ namespace SyncWave.Champions
             if (Env.ModuleVersion >= Common.Enums.V.Development)
             {
                 BuffEntry? buff = obj.BuffManager.GetBuffList().FirstOrDefault(x => IsCrowdControllButCanCleanse(x, false));
-                if (buff != null)
-                {
-                    Logger.Log($"{obj.ModelName} - {buff.EntryType} - {buff.Name}");
-                }
             }
 
             return obj.BuffManager.GetBuffList().Any(x => IsCrowdControllButCanCleanse(x, false));
@@ -361,9 +357,11 @@ namespace SyncWave.Champions
             Damage rDamage = new Damage(MainTab, RGroup, "R", (uint)4, RDamage, SharpDX.Color.Red);
             Render.AddDamage(qDamage);
             Render.AddDamage(rDamage);
-            GameEvents.OnCreateObject += ObjectInspector;
+            rCircle.isOn.IsOn = false;
+            //GameEvents.OnCreateObject += ObjectInspector;
             CoreEvents.OnCoreMainInputAsync += MainInput;
             CoreEvents.OnCoreRender += BarrelDrawer;
+
         }
 
         private void BarrelDrawer()
@@ -375,14 +373,6 @@ namespace SyncWave.Champions
                 {
                     RenderFactory.DrawNativeCircle(barrel.Position, 60, Color.Blue, 1);
                     
-                }
-            }
-            List<AIBaseClient> barrelList = Barrels.OrderByDescending(x => (GameEngine.GameTime - x.BuffManager.ActiveBuffs.First().StartTime)).ToList();
-            for (int i = 0; i < barrelList.Count; i++)
-            {
-                if (barrelList[i].Position.IsOnScreen())
-                {
-                    RenderFactory.DrawText($"{i+1}", barrelList[i].Position.ToW2S(), Color.Green);
                 }
             }
         }

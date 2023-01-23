@@ -276,7 +276,6 @@ namespace SyncWave.Common.Spells
                 else
                 {
                     Oasys.SDK.Prediction.MenuSelected.PredictionOutput pred = Prediction.Predict(target);
-                    Logger.Log(pred.HitChance);
                     if (pred.HitChance >= GetHitchanceFromName(HitChance.SelectedModeName) && SpellIsReady())
                     {
                         if ((CanKill) ? target.Health - EffectCalculator.CalculateDamage(target) < 0 : true)
