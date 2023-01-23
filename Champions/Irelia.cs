@@ -70,12 +70,12 @@ namespace SyncWave.Champions
         #endregion
 
         #region Stats
-        internal static float[] PassiveBonusDamageOnHit = new float[] { 10, 13, 16, 19, 22, 25, 28, 31, 34, 37, 40, 43, 46, 49, 52, 55, 58, 61 };
+        internal static float[] PassiveBonusDamageOnHit = new float[] { 0, 10, 13, 16, 19, 22, 25, 28, 31, 34, 37, 40, 43, 46, 49, 52, 55, 58, 61 };
         internal static float PassiveADScaling = 0.2F;
 
         internal static int[] QManaCost = new int[] { 0, 20, 20, 20, 20, 20 };
         internal static int[] QDamage = new int[] { 0, 5, 25, 45, 65, 85 };
-        internal static int[] QExtraMinionDamage = new int[] { 55, 67, 79, 91, 103, 115, 127, 139, 151, 163, 175, 187, 199, 211, 223, 235, 247, 259 };
+        internal static int[] QExtraMinionDamage = new int[] { 0, 55, 67, 79, 91, 103, 115, 127, 139, 151, 163, 175, 187, 199, 211, 223, 235, 247, 259 };
         internal static float[] QHealPercent = new float[] { 0, 0.09F, 0.10F, 0.11F, 0.12F, 0.13F };
         internal static float QADScaling = 0.6F;
         internal static int QTargetRange = 600;
@@ -197,7 +197,7 @@ namespace SyncWave.Champions
                 return 0;
             float physicalDamage = QDamage[Env.QLevel] + (Env.Me().UnitStats.TotalAttackDamage * QADScaling);
             if (target.IsObject(Oasys.Common.Enums.GameEnums.ObjectTypeFlag.AIMinionClient))
-                physicalDamage += QExtraMinionDamage[Env.Me().Level - 1];
+                physicalDamage += QExtraMinionDamage[Env.Me().Level];
             return DamageCalculator.CalculateActualDamage(Env.Me(), target, physicalDamage);
         }
 

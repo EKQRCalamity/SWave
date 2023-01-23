@@ -114,7 +114,7 @@ namespace SyncWave.Champions
 
         private Task MainTick()
         {
-            qLine.SetPrediction(QCastTime, 1600, true);
+            qLine.SetPrediction(0, 1600, true);
             wCircle.SetPrediction(0.627F, 10000, false);
             return Task.CompletedTask;
         }

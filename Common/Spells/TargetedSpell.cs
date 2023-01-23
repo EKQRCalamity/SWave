@@ -147,12 +147,12 @@ namespace SyncWave.Common.Spells
                 CoreEvents.OnCoreHarassInputAsync += HarassInputFunction;
                 HarassInitialized = true;
             }
-            if (Push && LasthitIsOn.IsOn && !LaneclearInitialized)
+            if (Push && LaneclearIsOn.IsOn && !LaneclearInitialized)
             {
                 CoreEvents.OnCoreLaneclearInputAsync += PushInputFunction;
                 LaneclearInitialized = true;
             }
-            if (MainInput && LaneclearIsOn.IsOn && !LasthitInitialized)
+            if (LastHit && LasthitIsOn.IsOn && !LasthitInitialized)
             {
                 CoreEvents.OnCoreLasthitInputAsync += LastHitInputFunction;
                 LasthitInitialized = true;
@@ -162,11 +162,12 @@ namespace SyncWave.Common.Spells
 
         private Task LastHitInputFunction()
         {
+            Orbwalker.AllowAttacking = false;
             if (!LasthitIsOn.IsOn || !isOn.IsOn || !IsOn(Env.Me()))
                 return Task.CompletedTask;
             foreach (GameObjectBase enemy in UnitManager.EnemyMinions)
             {
-                if (enemy.IsAlive && enemy.IsTargetable && enemy.IsValidTarget() && enemy.Distance < Range)
+                if (enemy.IsAlive && enemy.IsTargetable && enemy.Distance < Range)
                 {
                     if ((enemy.Health - EffectCalculator.CalculateDamage(enemy)) < 0 && Env.Me().Mana > MinMana.Value && this.SpellIsReady())
                     {
@@ -197,7 +198,7 @@ namespace SyncWave.Common.Spells
         private Task HarassInputFunction()
         {
             GameObjectBase? target = Oasys.Common.Logic.TargetSelector.GetBestHeroTarget(null, TargetSelector);
-            if (target != null && HarassIsOn.IsOn && isOn.IsOn && IsOn(Env.Me()))
+            if (target != null && HarassIsOn.IsOn && isOn.IsOn && IsOn(Env.Me()) && Env.Me().Mana > MinMana.Value && target.Distance < Range)
             {
                 if (target.IsAlive && target.IsTargetable && target.IsValidTarget() && target.IsObject(ObjectTypeFlag.AIHeroClient) && this.SpellIsReady())
                 {
@@ -211,7 +212,8 @@ namespace SyncWave.Common.Spells
         private Task MainInputFunction()
         {
             GameObjectBase? target = Oasys.Common.Logic.TargetSelector.GetBestHeroTarget(null, TargetSelector);
-            if (target != null && isOn.IsOn && IsOn(Env.Me()))
+            //Logger.Log(target);
+            if (target != null && isOn.IsOn && IsOn(Env.Me()) && Env.Me().Mana > MinMana.Value && target.Distance < Range)
             {
                 if (target.IsAlive && target.IsTargetable && target.IsValidTarget() && target.IsObject(ObjectTypeFlag.AIHeroClient) && this.SpellIsReady())
                 {

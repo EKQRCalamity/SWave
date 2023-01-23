@@ -179,12 +179,12 @@ namespace SyncWave.Common.Spells
                 CoreEvents.OnCoreHarassInputAsync += HarassInputFunction;
                 HarassInitialized = true;
             }
-            if (Push && LasthitIsOn.IsOn && !LaneclearInitialized)
+            if (Push && LaneclearIsOn.IsOn && !LaneclearInitialized)
             {
                 CoreEvents.OnCoreLaneclearInputAsync += PushInputFunction;
                 LaneclearInitialized = true;
             }
-            if (MainInput && LaneclearIsOn.IsOn && !LasthitInitialized)
+            if (LastHit && LasthitIsOn.IsOn && !LasthitInitialized)
             {
                 CoreEvents.OnCoreLasthitInputAsync += LastHitInputFunction;
                 LasthitInitialized = true;

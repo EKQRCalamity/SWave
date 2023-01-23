@@ -162,8 +162,8 @@ namespace SyncWave.Common.Helper
 
         internal static void DrawMultiDamage(GameObjectBase target, List<Damage> damageList)
         {
-            if (target != null)
-                Logger.Log($"Target given: {target.ModelName}");
+            //if (target != null)
+            //    Logger.Log($"Target given: {target.ModelName}");
             if (target == null)
                 throw new Exception("Null target given.");
             if (damageList.Count == 0) return;
@@ -177,7 +177,7 @@ namespace SyncWave.Common.Helper
             for (int i = 0; i < damageList.Count; i++)
             {
                 Damage damage = damageList[i];
-                Logger.Log(damage.Name);
+                //Logger.Log(damage.Name);
                 float prioDamage = damage.GetDamage(target);
                 float tempPrioDamage = prioDamage;
                 tempHealth -= prioDamage;
