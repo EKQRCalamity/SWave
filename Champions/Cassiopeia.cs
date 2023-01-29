@@ -130,7 +130,6 @@ namespace SyncWave.Champions
         CircleSpell wCircle;
         TargetedSpell eTargeted;
         ConeSpell rCone;
-
         internal static bool IsPoisoned(GameObjectBase target)
         {
             BuffEntry poisonBuff = null;
@@ -142,9 +141,6 @@ namespace SyncWave.Champions
                     break;
                 }
             }
-            // Works too
-            //Logger.Log($"Test: {target.BuffManager.GetBuffList().Any(buff => buff.IsActive &&
-            //       buff.Name.Contains("cassiopeia", StringComparison.OrdinalIgnoreCase))}");
             return poisonBuff != null;
         }
 
@@ -157,7 +153,7 @@ namespace SyncWave.Champions
             MainTab.AddGroup(RGroup);
             qCircle = new CircleSpell(MainTab, QGroup, Oasys.SDK.SpellCasting.CastSlot.Q, Oasys.Common.Enums.GameEnums.SpellSlot.Q, true, QCalc, QRange, QRadius, QCastTime, 50, false, true, false, false);
             wCircle = new CircleSpell(MainTab, WGroup, Oasys.SDK.SpellCasting.CastSlot.W, Oasys.Common.Enums.GameEnums.SpellSlot.W, true, WCalc, WRange, WRadius, WCastTime, 110, false, true, false, false);
-            eTargeted = new TargetedSpell(MainTab, EGroup, Oasys.SDK.SpellCasting.CastSlot.E, Oasys.Common.Enums.GameEnums.SpellSlot.E, true, ECalc, target => target.DistanceTo(Env.Me().Position) < ERange - 20 && IsPoisoned(target) || ECalc.CalculateDamage(target) > target.PredictHealth(150), ERange - 20, ECastTime, 50, false, true, false, true);
+            eTargeted = new TargetedSpell(MainTab, EGroup, Oasys.SDK.SpellCasting.CastSlot.E, Oasys.Common.Enums.GameEnums.SpellSlot.E, true, ECalc, target => target.DistanceTo(Env.Me().Position) < ERange - 20 && IsPoisoned(target) || ECalc.CalculateDamage(target) > target.PredictHealth(150), ERange - 20, ECastTime, 50, false, true, true, true);
             rCone = new ConeSpell(MainTab, RGroup, Oasys.SDK.SpellCasting.CastSlot.R, Oasys.Common.Enums.GameEnums.SpellSlot.R, true, RCalc, x => (x.IsFacing(Env.Me()) && x.IsAlive && x.DistanceTo(Env.Me().Position) < RRange), RRange, RAngle, RCastTime, 100, false, false, false, false, true, 2);
             qCircle.SetPrediction(0.4F, 10000, false);
             wCircle.SetPrediction(0.25F, ESpeed, false);

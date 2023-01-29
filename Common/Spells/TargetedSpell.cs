@@ -182,7 +182,7 @@ namespace SyncWave.Common.Spells
         {
             if (!LaneclearIsOn.IsOn || !isOn.IsOn || !IsOn(Env.Me()))
                 return Task.CompletedTask;
-            foreach (GameObjectBase enemy in UnitManager.EnemyMinions)
+            foreach (GameObjectBase enemy in UnitManager.EnemyMinions.Where(TargetSelector))
             {
                 if (enemy.IsAlive && enemy.IsTargetable && enemy.IsValidTarget() && enemy.Distance < Range && this.SpellIsReady())
                 {
