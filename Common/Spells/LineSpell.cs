@@ -200,7 +200,7 @@ namespace SyncWave.Common.Spells
             {
                 if (enemy.IsAlive && enemy.IsTargetable && enemy.IsValidTarget() && enemy.Distance < Range && this.SpellIsReady())
                 {
-                    if (Env.Me().Mana > MinMana.Value)
+                    if (enemy.Health - EffectCalculator.CalculateDamage(enemy) < 0 && Env.Me().Mana > MinMana.Value)
                     {
                         SpellCastProvider.CastSpell(CastSlot, enemy.Position, castTime);
                     }
