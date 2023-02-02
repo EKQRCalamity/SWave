@@ -164,6 +164,7 @@ namespace SyncWave.Champions
             Render.AddDamage(qDamage);
             Render.AddDamage(wDamage);
             Render.AddDamage(eDamage);
+            Render.AddDamage(rDamage);
             CoreEvents.OnCoreMainTick += MainTick;
         }
 
