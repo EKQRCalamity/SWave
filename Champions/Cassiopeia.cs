@@ -43,7 +43,7 @@ namespace SyncWave.Champions
         internal override float CalculateDamage(GameObjectBase target)
         {
             float damage = 0;
-            if (Env.QLevel >= 1)
+            if (Env.WLevel >= 1)
             {
                 damage = 2 *WBaseDamage[Env.WLevel];
                 damage += (2 * WAPScaling) * Env.Me().UnitStats.TotalAbilityPower;
@@ -63,9 +63,9 @@ namespace SyncWave.Champions
         internal override float CalculateDamage(GameObjectBase target)
         {
             float damage = 0;
-            if (Env.QLevel >= 1)
+            if (Env.ELevel >= 1)
             {
-                damage = EBaseDamage[((Env.Level > 18)? 18 : Env.Level) - 1];
+                damage = EBaseDamage[((Env.Level > 18)? 18 : Env.Level)];
                 damage += EAPScaling * Env.Me().UnitStats.TotalAbilityPower;
                 if (Cassiopeia.IsPoisoned(target))
                 {
