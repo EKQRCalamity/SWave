@@ -13,7 +13,6 @@ using Oasys.SDK.Tools;
 using SharpDX;
 using SharpDX.DXGI;
 using SyncWave.Base;
-using SyncWave.Combos.Kogmaw;
 using SyncWave.Common.Extensions;
 using SyncWave.Common.Helper;
 using SyncWave.Common.Spells;
