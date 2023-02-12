@@ -1,4 +1,5 @@
-﻿using Oasys.Common.Enums.GameEnums;
+
+using Oasys.Common.Enums.GameEnums;
 using Oasys.Common.EventsProvider;
 using Oasys.Common.Extensions;
 using Oasys.Common.GameObject;
@@ -7,398 +8,125 @@ using Oasys.Common.GameObject.ObjectClass;
 using Oasys.Common.Menu;
 using Oasys.Common.Menu.ItemComponents;
 using Oasys.SDK;
+using SyncWave.Base;
+using SyncWave.Common.Helper;
+using SyncWave.Common.Spells;
 using Oasys.SDK.Rendering;
 using Oasys.SDK.SpellCasting;
 using Oasys.SDK.Tools;
 using SharpDX;
-using SyncWave.Base;
 using SyncWave.Common.Extensions;
-using SyncWave.Common.Helper;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace SyncWave.Champions
+namespace SyncWave.Champions 
 {
-    #region DamageCalculation
-
-    internal class KalistaQDamageCalc : DamageCalculation
+    internal class KalistaQDamageCalculator : DamageCalculation 
     {
-        internal bool QCanTransferToTarget(Prediction.MenuSelected.PredictionOutput prediction)
+        internal static int[] BaseDamage = new int[] {0, 20, 85, 150, 215, 280};
+        internal static float ADScaling = 1F;
+        internal bool QCanTransferToTarget(Oasys.SDK.Prediction.MenuSelected.PredictionOutput pred) 
         {
-            foreach (GameObjectBase target in prediction.CollisionObjects)
+            bool transfer = true;
+            foreach (GameObjectBase target in pred.CollisionObjects) 
             {
-                if (target.CanKill(CalculateDamage(target)) && target.IsTargetable)
-                    continue;
-                else
-                    return false;
+                if (!target.CanKill(CalculateDamage(target)))
+                    transfer = false;
             }
-            return true;
+            return transfer;
         }
 
-        internal override float CalculateDamage(GameObjectBase target)
-        {
-            float dmg = 0;
-            if (Env.QLevel >= 1 && Env.QReady)
-            {
-                dmg = Kalista.QDamage[Env.QLevel] + (Kalista.QScaling * Env.Me().UnitStats.TotalAttackDamage);
-            }
-            return DamageCalculator.CalculateActualDamage(Env.Me(), target, 0, dmg, 0);
-        }
-    }
-
-    internal class KalistaEDamageCalc : DamageCalculation
-    {
-        internal float GetEStacks(GameObjectBase target)
-        {
-            List<BuffEntry> buffs = target.BuffManager.ActiveBuffs.deepCopy();
-            return buffs.FirstOrDefault(x => x.Name.Contains("kalistaexpungemarker"))?.Stacks ?? 0;
-        }
-
-        internal float GetDamageFromStacks(GameObjectBase target, float stacks)
+        internal override float CalculateDamage(GameObjectBase target) 
         {
             float damage = 0;
-            if (stacks > 0)
+            if (Env.QLevel > 0 && target.IsAlive && target.IsValidTarget()) 
             {
-                float baseDamage = Champions.Kalista.EDamage[Env.ELevel] + (Champions.Kalista.EScaling * Env.Me().UnitStats.TotalAttackDamage);
-                damage = baseDamage + ((Champions.Kalista.EAddSpearDamage[Env.ELevel] + (Champions.Kalista.EAddSpearScaling[Env.ELevel] * Env.Me().UnitStats.TotalAttackDamage)) * (stacks - 1));
-                var skin = target.UnitComponentInfo.SkinName.ToLower();
-                if (skin.Contains("dragon") || skin.Contains("baron") || skin.Contains("herald"))
-                {
-                    damage = damage / 2;
-                }
+                damage = BaseDamage[Env.QLevel] + (Env.Me().UnitStats.TotalAttackDamage * ADScaling);
                 damage = DamageCalculator.CalculateActualDamage(Env.Me(), target, damage);
             }
             return damage;
         }
+    }
 
-        internal override float CalculateDamage(GameObjectBase target)
+    internal class KalistaEDamageCalculator : DamageCalculation 
+    {
+        internal static int[] BaseDamage = new int[] { 0, 20, 30, 40, 50, 60};
+        internal float ADScaling = 0.7F;
+
+        internal static int[] AdditionalDamage = new int[] { 0, 10, 16, 22, 28, 34};
+        internal static float[] AdditionalScaling = new float[] { 0, 0.232F, 0.2755F, 0.319F, 0.3625F, 0.406F };
+
+        internal float GetEStacks(GameObjectBase target)
         {
-            float damage = 0;
-            float stacks = GetEStacks(target);
-            if (stacks >= 1)
-            {
-                damage = GetDamageFromStacks(target, stacks);
+            if (target.IsAlive && target.IsVisible) {
+                return target.BuffManager.ActiveBuffs.FirstOrDefault(x => x.Name.Contains("kalistaexpungemarker"))?.Stacks ?? 0;
             }
-            return damage;
+            return 0;
+        }
+
+        internal override float CalculateDamage(GameObjectBase target) 
+        {
+            try
+            {
+                float damage = 0;
+                float stacks = GetEStacks(target);
+                if (Env.ELevel > 0 && target.IsAlive && target.IsValidTarget() && stacks > 0)
+                {
+                    damage = BaseDamage[Env.ELevel];
+                    damage += ADScaling * Env.Me().UnitStats.TotalAttackDamage; 
+                    damage += (AdditionalDamage[Env.ELevel] + (AdditionalScaling[Env.ELevel] * Env.Me().UnitStats.TotalAttackDamage)) * (stacks - 1);
+                    damage = DamageCalculator.CalculateActualDamage(Env.Me(), target, damage);
+                }
+                return damage;
+            }catch(Exception ex)
+            {
+                Logger.Log($"Catched exception: {ex.ToString()}");
+                return 0;
+            }
+            
         }
     }
-    #endregion
 
-    internal class Kalista : SyncWave.Base.Module
+    internal class Kalista : Module 
     {
-        #region Statics/Stats
-        internal static KalistaQDamageCalc QCalc = new();
+        internal Tab MainTab = new Tab("SyncWave - Kalista");
+        internal Group QGroup = new Group("Q Settings");
+        internal Group EGroup = new Group("E Settings");
 
-        internal static KalistaEDamageCalc ECalc = new();
-
-        internal static Damage? _QDamage;
-        internal static Damage? _EDamage;
-
-        
-        internal int TickCycles = 0;
-        internal static Hero? BoundAlly { get; set; }
-
-        internal static int[] QManaCost = new int[] { 0, 50, 55, 60, 65, 70 };
-        internal static int[] EManaCost = new int[] { 0, 30, 30, 30, 30, 30 };
-        internal static int[] RManaCost = new int[] { 0, 100, 100, 100 };
-
-        internal static int[] QDamage = new int[] { 0, 20, 85, 150, 215, 280 };
-        internal static float QScaling = 1;
         internal static float QCastTime = 0.25F;
         internal static int QRange = 1200;
         internal static int QSpeed = 2400;
         internal static int QWidth = 80;
 
-        internal static int[] EDamage = new int[] { 0, 20, 30, 40, 50, 60 };
-        internal static float EScaling = 0.7F;
-        internal static int[] EAddSpearDamage = new int[] { 0, 10, 16, 22, 28, 34 };
-        internal static float[] EAddSpearScaling = new float[] { 0, 0.232F, 0.2755F, 0.319F, 0.3625F, 0.406F };
         internal static float ECastTime = 0.25F;
         internal static int ERange = 1100;
 
-        internal static int RTargetRange = 1200;
-        internal static int RTetherRadius = 1100;
-        #endregion
+        KalistaQDamageCalculator qCalc = new();
+        KalistaEDamageCalculator eCalc = new();
 
-        internal override void Init()
+        LineSpell qLine;
+        UntargetedMultiSpell eExecute;
+
+        internal override void Init() 
         {
-            Logger.Log("Kalista Initializing...");
-            InitMenu();
-            CoreEvents.OnCoreMainTick += OnCoreMainTick;
-            CoreEvents.OnCoreMainInputAsync += OnCoreMainInput;
-            CoreEvents.OnCoreLaneclearInputAsync += OnCoreLaneClear;
-            Render.Init();
-            _QDamage = new Damage(KalistaTab, QGroup, "Q", (uint)3, QCalc, Color.Blue);
-            _EDamage = new Damage(KalistaTab, EGroup, "E", (uint)4, ECalc, Color.Orange);
-            Logger.Log("Kalista Initialized!");
-            Common.Spells.AimSpell Q = new Common.Spells.AimSpell(QRange, KalistaTab, CastSlot.Q, SpellSlot.Q);
-            Q.SetPrediction(Prediction.MenuSelected.PredictionType.Line, Champions.Kalista.QRange - 40, Champions.Kalista.QWidth, Champions.Kalista.QCastTime, Champions.Kalista.QSpeed, true);
-            Render.AddDamage(_QDamage);
-            Render.AddDamage( _EDamage);
+            MenuManagerProvider.AddTab(MainTab);
+            MainTab.AddGroup(QGroup);
+            MainTab.AddGroup(EGroup);
+            qLine = new LineSpell(MainTab, QGroup, CastSlot.Q, SpellSlot.Q, true, qCalc, QRange, QWidth, QCastTime, 70, false, false, false, false, true, 99);
+            eExecute = new UntargetedMultiSpell(MainTab, EGroup, CastSlot.E, SpellSlot.E, true, eCalc, ERange, ECastTime, 30, true, false, false);
+            Damage qDamage = new Damage(MainTab, QGroup, "Q", (uint)6, qCalc, SharpDX.Color.DodgerBlue);
+            Damage eDamage = new Damage(MainTab, EGroup, "E", (uint)7, eCalc, SharpDX.Color.Orange);
+            Render.AddDamage(qDamage);
+            Render.AddDamage(eDamage);
+            CoreEvents.OnCoreMainTick += MainTick;
         }
 
-        #region Menu
-        internal static Tab KalistaTab = new Tab("SyncWave - Kalista");
-
-        internal static Group General = new Group("General");
-        internal static Switch Enabled = new Switch("Enabled", true);
-        internal static Switch LaneClearWoTarget = new Switch("Laneclear w/o target", true);
-
-        internal static Group QGroup = new Group("Q Settings");
-        internal static Switch QEnabled = new Switch("Enabled", true);
-        internal static Switch QTransfer = new Switch("Can Transfer Spears", true);
-        internal static ModeDisplay QHitChance = new ModeDisplay() { Title = "Q Hitchance", ModeNames = new() { "Impossible", "Unknown", "OutOfRange", "Dashing", "Low", "Medium", "High", "VeryHigh", "Immobile" }, SelectedModeName = "VeryHigh" };
-        
-        internal static Group WGroup = new Group("W Settings");
-        internal static Switch WEnabled = new Switch("Enabled", true);
-        internal static Counter WMaxCounter = new Counter("Max Distance", 4000, 0, 50000);
-        internal static Counter WMinCounter = new Counter("Min Distance", 2000, 0, 50000);
-        internal static InfoDisplay WInfo = new InfoDisplay() { Title = "Usage", Information = "W will be used when Dragon Spawns/gets attacked." };
-        
-        internal static Group EGroup = new Group("E Settings");
-        internal static Switch EEnabled = new Switch("Enabled", true);
-        internal static Switch UseEInLanceclear = new Switch("Use E in Laneclear", true);
-
-        internal static Group RGroup = new Group("R Settings");
-        internal static Switch REnabled = new Switch("Enabled", true);
-        internal static Counter RAllyHPPercent = new Counter("Ally HP%", 25, 0, 100);
-        internal static Counter CastEnemyNear = new Counter("Cast Enemy Nearer", RTargetRange, 0, 100000);
-    
-        internal void InitMenu()
+        internal Task MainTick() 
         {
-            MenuManagerProvider.AddTab(KalistaTab);
-
-            KalistaTab.AddGroup(General);
-            General.AddItem(LaneClearWoTarget);
-
-            KalistaTab.AddGroup(QGroup);
-            QGroup.AddItem(QEnabled);
-            QGroup.AddItem(QTransfer);
-            QGroup.AddItem(QHitChance);
-
-            KalistaTab.AddGroup(WGroup);
-            WGroup.AddItem(WEnabled);
-            WGroup.AddItem(WMaxCounter);
-            WGroup.AddItem(WMinCounter);
-            WGroup.AddItem(WInfo);
-
-            KalistaTab.AddGroup(EGroup);
-            EGroup.AddItem(EEnabled);
-            EGroup.AddItem(UseEInLanceclear);
-
-            KalistaTab.AddGroup(RGroup);
-            RGroup.AddItem(REnabled);
-            RGroup.AddItem(RAllyHPPercent);
-            RGroup.AddItem(CastEnemyNear);
-        }
-        #endregion
-
-        #region Logic
-
-        internal bool CanCastQ() => Env.QReady && QEnabled.IsOn && Env.Me().enoughMana(QManaCost[Env.QLevel]) && Enabled.IsOn;
-        internal bool CanCastW() => Env.WReady && Env.Spells.GetSpellClass(Oasys.Common.Enums.GameEnums.SpellSlot.W).Charges > 0 && WEnabled.IsOn && Env.Me().enoughMana(0) && Enabled.IsOn;
-        internal bool CanCastE() => Env.EReady && EEnabled.IsOn && Env.Me().enoughMana(EManaCost[Env.ELevel]) && Enabled.IsOn;
-        internal bool CanCastR() => Env.RReady && REnabled.IsOn && Env.Me().enoughMana(RManaCost[Env.RLevel]) && Enabled.IsOn;
-
-        internal static List<GameObjectBase> getEnemiesWithStacks(ObjectTypeFlag[] flags)
-        {
-            List<GameObjectBase> enemies = new();
-            foreach (GameObjectBase hero in UnitManager.GetEnemies(flags).deepCopy())
-            {
-                float stacks = ECalc.GetEStacks(hero);
-                if (stacks >= 1 && hero.IsAlive && hero.IsVisible)
-                {
-                    enemies.Add(hero);
-                }
-            }
-            return enemies;
-        }
-
-        internal static Prediction.MenuSelected.HitChance GetHitchanceFromName(string name)
-        {
-            return name.ToLower() switch
-            {
-                "immobile" => Prediction.MenuSelected.HitChance.Immobile,
-                "veryhigh" => Prediction.MenuSelected.HitChance.VeryHigh,
-                "high" => Prediction.MenuSelected.HitChance.High,
-                "medium" => Prediction.MenuSelected.HitChance.Medium,
-                "low" => Prediction.MenuSelected.HitChance.Low,
-                "dashing" => Prediction.MenuSelected.HitChance.Dashing,
-                "outofrange" => Prediction.MenuSelected.HitChance.OutOfRange,
-                "unknown" => Prediction.MenuSelected.HitChance.Unknown,
-                _ => Prediction.MenuSelected.HitChance.Impossible
-            };
-        }
-
-        internal bool ShouldCastE(bool combo = false)
-        {
-            List<ObjectTypeFlag> flags = new() { ObjectTypeFlag.AIHeroClient };
-            List<GameObjectBase> targets = getEnemiesWithStacks(flags.ToArray()).deepCopy();
-            foreach (GameObjectBase target in targets)
-            {
-                if (target.Distance <= ERange && target.IsTargetable && target.CanKill(ECalc.CalculateDamage(target)) && target.IsAlive)
-                    return true;
-            }
-            if (!combo)
-            {
-                foreach (GameObjectBase target in UnitManager.EnemyMinions)
-                {
-                    if (target.Distance <= ERange && target.IsTargetable && target.CanKill(ECalc.CalculateDamage(target)) && target.IsAlive)
-                        return true;
-                }
-            }
-            return false;
-        }
-
-        internal bool EnemyNearer()
-        {
-            foreach (GameObjectBase target in UnitManager.EnemyChampions)
-            {
-                if (EnemyNearer(target))
-                    return true;
-            }
-            return false;
-        }
-
-        internal bool EnemyNearer(GameObjectBase target)
-        {
-            if (BoundAlly == null) return false;
-            return target.DistanceTo(BoundAlly.Position) <= CastEnemyNear.Value;
-        }
-
-        internal bool ShouldCastR()
-        {
-            if (BoundAlly == null)
-                return false;
-            return BoundAlly.MissingHealthPercent <= RAllyHPPercent.Value && BoundAlly.IsAlive && BoundAlly.Distance <= RTetherRadius && BoundAlly.IsTargetable && EnemyNearer();
-        }
-
-        internal void SetTargetChampsOnly(bool value)
-        {
-            try
-            {
-                Oasys.Common.Settings.Orbwalker.HoldTargetChampsOnly = value;
-            }
-            catch (Exception ex)
-            {
-                if (Env.ModuleVersion == Common.Enums.V.Development)
-                    Logger.Log(ex.Message);
-            }
-        }
-
-        #endregion
-
-        #region Casts
-        internal Prediction.MenuSelected.PredictionOutput PredictQ(GameObjectBase target)
-        {
-            return Prediction.MenuSelected.GetPrediction(Prediction.MenuSelected.PredictionType.Line, target, Champions.Kalista.QRange - 40, Champions.Kalista.QWidth, Champions.Kalista.QCastTime, Champions.Kalista.QSpeed, true);
-        }
-
-        internal void TryCastQ(GameObjectBase target)
-        {
-            if (target == null) return;
-            if (CanCastQ() && target.IsValidTarget())
-            {
-                Prediction.MenuSelected.PredictionOutput pred = PredictQ(target);
-                if (pred.HitChance >= GetHitchanceFromName(QHitChance.SelectedModeName))
-                {
-                    if (!pred.Collision || QTransfer.IsOn && QCalc.QCanTransferToTarget(pred))
-                    {
-                        SpellCastProvider.CastSpell(CastSlot.Q, pred.CastPosition);
-                    }
-                }
-            }
-        }
-
-        internal void TryCastE(bool combo = false)
-        {
-            if (ShouldCastE(combo) && CanCastE())
-            {
-                SpellCastProvider.CastSpell(CastSlot.E);
-            }
-        }
-        
-        internal void TryCastR()
-        {
-            if (ShouldCastR() && CanCastR())
-            {
-                SpellCastProvider.CastSpell(CastSlot.R);
-            }
-                
-        }
-        #endregion
-
-        #region Events
-
-        internal Task OnCoreMainTick()
-        {
-            #region FindBoundALly
-            TickCycles++;
-            if (BoundAlly == null && TickCycles % 10 == 0 && Env.Me().Level >= 6 && Enabled.IsOn)
-            {
-                BoundAlly = UnitManager.AllyChampions.deepCopy().FirstOrDefault(ally => ally.BuffManager.GetBuffList().deepCopy().Any(x => x.Name.Contains("kalistacoopstrikeally", StringComparison.OrdinalIgnoreCase)));
-                if (BoundAlly != null)
-                    Logger.Log($"Found bound ally: {BoundAlly.ModelName}");
-            }
-            #endregion
+            qLine.SetPrediction(QCastTime, QSpeed, true);
             return Task.CompletedTask;
         }
-
-        internal Task OnCoreMainInput()
-        {
-            if (!Enabled.IsOn)
-                return Task.CompletedTask;
-            GameObjectBase target = Oasys.Common.Logic.TargetSelector.GetBestHeroTarget(null, x => x.Distance <= Env.Me().TrueAttackRange);
-            bool _origTarget = Oasys.Common.Settings.Orbwalker.HoldTargetChampsOnly;
-            if (LaneClearWoTarget.IsOn && target == null && Oasys.SDK.Orbwalker.TargetHero == null)
-            {
-                SetTargetChampsOnly(false);
-                Oasys.SDK.Orbwalker.SelectedTarget = UnitManager.EnemyMinions.deepCopy().OrderBy(x => x.Distance).FirstOrDefault(x => Oasys.SDK.TargetSelector.IsAttackable(x) && Oasys.SDK.TargetSelector.IsInRange(x));
-                if (Oasys.SDK.Orbwalker.SelectedTarget is null)
-                {
-                    Oasys.SDK.Orbwalker.SelectedTarget = UnitManager.EnemyTowers.deepCopy().OrderBy(x => x.Distance).FirstOrDefault(x => Oasys.SDK.TargetSelector.IsAttackable(x) && Oasys.SDK.TargetSelector.IsInRange(x));
-                    if (Oasys.SDK.Orbwalker.SelectedTarget is null)
-                    {
-                        Oasys.SDK.Orbwalker.SelectedTarget = UnitManager.EnemyJungleMobs.deepCopy().OrderBy(x => x.Distance).FirstOrDefault(x => Oasys.SDK.TargetSelector.IsAttackable(x) && Oasys.SDK.TargetSelector.IsInRange(x));
-                        if (Oasys.SDK.Orbwalker.SelectedTarget is null)
-                        {
-                            Oasys.SDK.Orbwalker.SelectedTarget = UnitManager.EnemyInhibitors.deepCopy().OrderBy(x => x.Distance).FirstOrDefault(x => Oasys.SDK.TargetSelector.IsAttackable(x) && Oasys.SDK.TargetSelector.IsInRange(x));
-                        }
-                    }
-                }
-            }
-            if (target != null)
-                SetTargetChampsOnly(_origTarget);
-            #region QCast
-            if (QEnabled.IsOn)
-            {
-                GameObjectBase target2 = Oasys.Common.Logic.TargetSelector.GetBestHeroTarget(null, x => x.Distance <= QRange-20);
-                TryCastQ(target2);
-            }
-            #endregion
-            #region ECast
-            if (EEnabled.IsOn)
-                TryCastE(true);
-            #endregion
-            #region RCast
-            if (REnabled.IsOn)
-                TryCastR();
-            #endregion
-            return Task.CompletedTask;
-        }
-
-        internal Task OnCoreLaneClear()
-        {
-            if (!Enabled.IsOn)
-                return Task.CompletedTask;
-            #region ECast
-            if (EEnabled.IsOn && UseEInLanceclear.IsOn)
-                TryCastE(false);
-            #endregion
-            return Task.CompletedTask;
-        }
-        #endregion
     }
 }
